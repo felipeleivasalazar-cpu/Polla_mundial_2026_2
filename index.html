@@ -203,7 +203,7 @@ function setApiUrl(){
 async function apiGet(){
   if(!API_URL) return null;
   try{
-    const r = await fetch(API_URL+'?action=getAll');
+    const r = await fetch(API_URL+'?action=getAll', {redirect:'follow'});
     return await r.json();
   }catch(e){return null;}
 }
@@ -211,11 +211,12 @@ async function apiGet(){
 async function apiPost(body){
   if(!API_URL){toast('Configura la URL de Apps Script primero');return null;}
   try{
-    const r = await fetch(API_URL, {
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body: JSON.stringify(body)
-    });
+    // Usamos GET con parámetros para evitar CORS (Apps Script no soporta POST desde browsers externos)
+    const params = new URLSearchParams();
+    for(const [k,v] of Object.entries(body)){
+      params.append(k, typeof v === 'object' ? JSON.stringify(v) : v);
+    }
+    const r = await fetch(API_URL+'?'+params.toString(), {redirect:'follow'});
     return await r.json();
   }catch(e){toast('Error de conexión');return null;}
 }
