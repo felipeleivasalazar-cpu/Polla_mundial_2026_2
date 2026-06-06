@@ -91,6 +91,17 @@ input:focus,select:focus{border-color:var(--accent)}
 .cd-num{font-family:'Barlow Condensed',sans-serif;font-size:2rem;font-weight:800;color:var(--accent);line-height:1}
 .cd-unit{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
 .cd-sep{font-family:'Barlow Condensed',sans-serif;font-size:2rem;font-weight:800;color:var(--muted);align-self:flex-start;padding-top:2px}
+.comment-box{background:var(--surface2);border-radius:8px;padding:10px 12px;margin-bottom:8px}
+.comment-author{font-size:.8rem;font-weight:600;color:var(--accent)}
+.comment-time{font-size:.72rem;color:var(--muted);margin-left:6px}
+.comment-text{font-size:.88rem;margin-top:4px;color:var(--text)}
+.reactions-bar{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.reaction-btn{background:var(--surface);border:1px solid var(--border2);border-radius:999px;padding:4px 10px;font-size:1rem;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:4px}
+.reaction-btn:hover{border-color:var(--accent);background:rgba(232,200,74,.1)}
+.reaction-btn .count{font-size:.75rem;color:var(--muted);font-weight:600}
+.comment-input-row{display:flex;gap:8px;margin-top:10px}
+.comment-input-row input{flex:1;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;padding:8px 12px;color:var(--text);font-size:.88rem;font-family:'Barlow',sans-serif}
+.comment-input-row button{background:var(--accent);color:#000;border:none;border-radius:8px;padding:8px 14px;font-weight:700;cursor:pointer;font-family:'Barlow Condensed',sans-serif;font-size:.95rem;white-space:nowrap}
 @media(max-width:480px){
   .match-row{grid-template-columns:1fr 46px 18px 46px 1fr;gap:4px}
   .score-box{width:46px}
@@ -123,8 +134,8 @@ input:focus,select:focus{border-color:var(--accent)}
 </div>
 
 <div class="tabs">
-  <button class="tab active" onclick="switchTab('registro')">👤 Registro</button>
-  <button class="tab" onclick="switchTab('pronosticos')">📋 Pronósticos</button>
+  <button class="tab" onclick="switchTab('registro')">✚ Registrarse</button>
+  <button class="tab active" onclick="switchTab('pronosticos')">📋 Pronósticos</button>
   <button class="tab" onclick="switchTab('resultados')">🏆 Resultados</button>
   <button class="tab" onclick="openAdmin()">⚙️ Admin</button>
 </div>
@@ -132,7 +143,7 @@ input:focus,select:focus{border-color:var(--accent)}
 <div class="container">
 
   <!-- REGISTRO -->
-  <div id="view-registro" class="view active">
+  <div id="view-registro" class="view">
     <div class="card">
       <div class="card-title">Unirse a la polla</div>
       <div style="margin-bottom:12px">
@@ -149,7 +160,7 @@ input:focus,select:focus{border-color:var(--accent)}
   </div>
 
   <!-- PRONÓSTICOS -->
-  <div id="view-pronosticos" class="view">
+  <div id="view-pronosticos" class="view active">
     <div class="card" style="margin-bottom:1rem">
       <div style="margin-bottom:12px">
         <label>Selecciona tu nombre</label>
@@ -175,6 +186,7 @@ input:focus,select:focus{border-color:var(--accent)}
     <div id="leaderboard"></div>
     <div id="results-list" style="margin-top:1.5rem"></div>
     <div id="pronosticos-view" style="margin-top:1.5rem"></div>
+    <div id="comments-view" style="margin-top:1.5rem"></div>
   </div>
 
   <!-- ADMIN -->
@@ -241,7 +253,7 @@ function f(t){
 // Fuente: Calendario oficial FIFA Mundial 2026
 const MATCHES = [
   // --- Jornada 1 ---
-  {id:1,  group:'A', home:'México',         away:'Sudáfrica',          kickoff:'2026-06-06T14:26:00-04:00'},
+  {id:1,  group:'A', home:'México',         away:'Sudáfrica',          kickoff:'2026-06-06T14:40:00-04:00'},
   {id:2,  group:'A', home:'Corea del Sur',  away:'República Checa',    kickoff:'2026-06-11T22:00:00-04:00'},
   {id:3,  group:'B', home:'Canadá',         away:'Bosnia y Herzegovina',kickoff:'2026-06-12T15:00:00-04:00'},
   {id:4,  group:'D', home:'USA',            away:'Paraguay',           kickoff:'2026-06-12T21:00:00-04:00'},
@@ -352,7 +364,7 @@ async function apiPost(body){
 }
 
 // ── STATE ──────────────────────────────────────────────────
-let state = {participants:[],pronosticos:{},results:{}};
+let state = {participants:[],pronosticos:{},results:{},comments:[]};
 
 async function loadAll(){
   const data = await apiGet();
@@ -377,7 +389,7 @@ function switchTab(tab){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   event.currentTarget.classList.add('active');
   document.getElementById('view-'+tab).classList.add('active');
-  if(tab==='resultados'){renderLeaderboard();renderResultsList();renderPronosticosView();}
+  if(tab==='resultados'){renderLeaderboard();renderResultsList();renderPronosticosView();renderCommentsView();}
   // admin handled by openAdmin()
   if(tab==='pronosticos'){updateSelects();loadUserForm();}
   if(tab==='registro'){renderParticipants();}
@@ -447,7 +459,9 @@ async function validateAndLoadForm(){
     errEl.style.display='block';
     return;
   }
+  const pinVal = document.getElementById('prono-pin').value.trim();
   sessionStorage.setItem('pronoUser', user);
+  sessionStorage.setItem('pronoPin', pinVal);
   loadUserForm(user);
 }
 
@@ -774,6 +788,101 @@ function updateCountdown(){
 }
 
 setInterval(updateCountdown, 1000);
+
+// ── COMENTARIOS Y REACCIONES ──────────────────────────────────
+const EMOJIS = ['👏','😱','🤦','🔥','😭','🎉','😤','🥵'];
+
+function renderCommentsView(){
+  const c = document.getElementById('comments-view');
+  const locked = MATCHES.filter(m => isLocked(m));
+  if(!locked.length){ c.innerHTML=''; return; }
+
+  const user = sessionStorage.getItem('pronoUser');
+  const loggedIn = !!user;
+
+  let html = '<div class="section-divider">Comentarios por partido</div>';
+
+  locked.forEach(m => {
+    const matchComments = (state.comments || []).filter(cm => cm.matchId == m.id);
+    const reactions = {};
+    EMOJIS.forEach(e => reactions[e] = 0);
+    matchComments.filter(cm => cm.type === 'reaction').forEach(cm => {
+      if(reactions[cm.text] !== undefined) reactions[cm.text]++;
+    });
+    const textComments = matchComments.filter(cm => cm.type === 'comment');
+
+    html += '<div class="card" style="margin-bottom:10px">';
+    html += '<div style="font-weight:600;font-size:.9rem;margin-bottom:10px">' + f(m.home) + ' ' + m.home + ' vs ' + f(m.away) + ' ' + m.away + '</div>';
+
+    // Reacciones
+    html += '<div class="reactions-bar">';
+    EMOJIS.forEach(e => {
+      const cnt = reactions[e];
+      html += '<button class="reaction-btn" onclick="sendReaction(' + m.id + ','' + e + '')">' + e + (cnt > 0 ? '<span class="count">' + cnt + '</span>' : '') + '</button>';
+    });
+    html += '</div>';
+
+    // Comentarios de texto
+    if(textComments.length){
+      html += '<div style="margin-top:10px">';
+      textComments.forEach(cm => {
+        html += '<div class="comment-box">';
+        html += '<span class="comment-author">' + cm.user + '</span>';
+        html += '<span class="comment-time">' + cm.time + '</span>';
+        html += '<div class="comment-text">' + escHtml(cm.text) + '</div>';
+        html += '</div>';
+      });
+      html += '</div>';
+    }
+
+    // Input comentario
+    if(loggedIn){
+      html += '<div class="comment-input-row">';
+      html += '<input type="text" id="comment-input-' + m.id + '" placeholder="Escribe un comentario..." maxlength="200" onkeydown="if(event.key==='Enter')sendComment(' + m.id + ')">';
+      html += '<button onclick="sendComment(' + m.id + ')">Enviar</button>';
+      html += '</div>';
+    } else {
+      html += '<p style="font-size:.78rem;color:var(--muted);margin-top:8px">Inicia sesión en Pronósticos para comentar</p>';
+    }
+
+    html += '</div>';
+  });
+
+  c.innerHTML = html;
+}
+
+function escHtml(str){
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function sendReaction(matchId, emoji){
+  const user = sessionStorage.getItem('pronoUser');
+  if(!user){ toast('Inicia sesión en Pronósticos primero'); return; }
+  const pin = sessionStorage.getItem('pronoPin');
+  const r = await apiPost({action:'saveComment', user, pin, matchId, text:emoji, type:'reaction'});
+  if(!r) return;
+  if(!state.comments) state.comments = [];
+  state.comments.push({matchId, user, text:emoji, type:'reaction', time:''});
+  renderCommentsView();
+}
+
+async function sendComment(matchId){
+  const user = sessionStorage.getItem('pronoUser');
+  if(!user){ toast('Inicia sesión en Pronósticos primero'); return; }
+  const input = document.getElementById('comment-input-' + matchId);
+  const text = input.value.trim();
+  if(!text){ toast('Escribe algo primero'); return; }
+  const pin = sessionStorage.getItem('pronoPin');
+  const r = await apiPost({action:'saveComment', user, pin, matchId, text, type:'comment'});
+  if(!r) return;
+  if(!state.comments) state.comments = [];
+  const now = new Date();
+  const time = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  state.comments.push({matchId, user, text, type:'comment', time});
+  input.value = '';
+  renderCommentsView();
+  toast('Comentario enviado ✓');
+}
 
 // ── AUTO-LOCK WATCHER ─────────────────────────────────────────
 // Revisa cada 30 segundos si algún partido acaba de comenzar
