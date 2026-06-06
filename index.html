@@ -241,7 +241,7 @@ function f(t){
 // Fuente: Calendario oficial FIFA Mundial 2026
 const MATCHES = [
   // --- Jornada 1 ---
-  {id:1,  group:'A', home:'México',         away:'Sudáfrica',          kickoff:'2026-06-06T14:20:00-04:00'},
+  {id:1,  group:'A', home:'México',         away:'Sudáfrica',          kickoff:'2026-06-06T14:26:00-04:00'},
   {id:2,  group:'A', home:'Corea del Sur',  away:'República Checa',    kickoff:'2026-06-11T22:00:00-04:00'},
   {id:3,  group:'B', home:'Canadá',         away:'Bosnia y Herzegovina',kickoff:'2026-06-12T15:00:00-04:00'},
   {id:4,  group:'D', home:'USA',            away:'Paraguay',           kickoff:'2026-06-12T21:00:00-04:00'},
@@ -614,7 +614,7 @@ function renderPronosticosView(){
       html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">';
       html += '<span style="font-size:.9rem;font-weight:600">' + f(m.home) + ' ' + m.home + ' vs ' + f(m.away) + ' ' + m.away + '</span>';
       if(real){
-        html += '<span style="font-family:'Barlow Condensed',sans-serif;font-size:1.2rem;font-weight:700;color:var(--accent)">' + real.h + ' - ' + real.a + '</span>';
+        html += '<span style="font-family:var(--font-condensed,sans-serif);font-size:1.2rem;font-weight:700;color:var(--accent)">' + real.h + ' - ' + real.a + '</span>';
       } else {
         html += '<span class="pill pending">En curso</span>';
       }
