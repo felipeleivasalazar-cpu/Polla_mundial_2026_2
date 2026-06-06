@@ -214,7 +214,7 @@ function f(t){
 // Fuente: Calendario oficial FIFA Mundial 2026
 const MATCHES = [
   // --- Jornada 1 ---
-  {id:1,  group:'A', home:'México',         away:'Sudáfrica',          kickoff:'2026-06-06T13:35:00-04:00'},
+  {id:1,  group:'A', home:'México',         away:'Sudáfrica',          kickoff:'2026-06-06T13:48:00-04:00'},
   {id:2,  group:'A', home:'Corea del Sur',  away:'República Checa',    kickoff:'2026-06-11T22:00:00-04:00'},
   {id:3,  group:'B', home:'Canadá',         away:'Bosnia y Herzegovina',kickoff:'2026-06-12T15:00:00-04:00'},
   {id:4,  group:'D', home:'USA',            away:'Paraguay',           kickoff:'2026-06-12T21:00:00-04:00'},
@@ -403,6 +403,7 @@ function clearPinValidation(){
   document.getElementById('matches-form').innerHTML='';
   document.getElementById('save-prono-btn').style.display='none';
   document.getElementById('pin-error').style.display='none';
+  sessionStorage.removeItem('pronoUser');
 }
 
 async function validateAndLoadForm(){
@@ -419,6 +420,7 @@ async function validateAndLoadForm(){
     errEl.style.display='block';
     return;
   }
+  sessionStorage.setItem('pronoUser', user);
   loadUserForm(user);
 }
 
@@ -599,7 +601,7 @@ function toast(msg){
 }
 
 // ── ADMIN LOGIN ───────────────────────────────────────────────
-const ADMIN_PASSWORD = 'Manzana77'; // ← Cambia esta contraseña
+const ADMIN_PASSWORD = 'mundial2026'; // ← Cambia esta contraseña
 
 function openAdmin(){
   // Cambiar tab activo
@@ -636,6 +638,27 @@ function showAdminContent(){
   renderAdmin();
 }
 
+// ── AUTO-LOCK WATCHER ─────────────────────────────────────────
+// Revisa cada 30 segundos si algún partido acaba de comenzar
+// y recarga el formulario de pronósticos para bloquearlo
+let lastLockedCount = 0;
+
+function watchKickoffs(){
+  const lockedNow = MATCHES.filter(m => isLocked(m)).length;
+  if(lockedNow !== lastLockedCount){
+    lastLockedCount = lockedNow;
+    // Si el tab de pronósticos está activo y hay un usuario cargado, recargar
+    const pronoActive = document.getElementById('view-pronosticos').classList.contains('active');
+    const pinOk = sessionStorage.getItem('pronoUser');
+    if(pronoActive && pinOk){
+      loadUserForm(pinOk);
+      toast('⏱ Un partido acaba de comenzar — pronóstico bloqueado');
+    }
+  }
+}
+
+setInterval(watchKickoffs, 30000); // cada 30 segundos
+
 // ── INIT ───────────────────────────────────────────────────
 (async()=>{
   if(!API_URL){
@@ -645,6 +668,7 @@ function showAdminContent(){
     document.getElementById('api-url-input').value=API_URL;
     await loadAll();
   }
+  lastLockedCount = MATCHES.filter(m => isLocked(m)).length;
 })();
 </script>
 </body>
