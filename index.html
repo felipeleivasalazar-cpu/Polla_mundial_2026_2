@@ -253,7 +253,7 @@ function f(t){
 // Fuente: Calendario oficial FIFA Mundial 2026
 const MATCHES = [
   // --- Jornada 1 ---
-  {id:1,  group:'A', home:'México',         away:'Sudáfrica',          kickoff:'2026-06-06T15:36:00-04:00'},
+  {id:1,  group:'A', home:'México',         away:'Sudáfrica',          kickoff:'2026-06-06T15:40:00-04:00'},
   {id:2,  group:'A', home:'Corea del Sur',  away:'República Checa',    kickoff:'2026-06-11T22:00:00-04:00'},
   {id:3,  group:'B', home:'Canadá',         away:'Bosnia y Herzegovina',kickoff:'2026-06-12T15:00:00-04:00'},
   {id:4,  group:'D', home:'USA',            away:'Paraguay',           kickoff:'2026-06-12T21:00:00-04:00'},
@@ -838,7 +838,7 @@ function renderCommentsView(){
     // Input comentario
     if(loggedIn){
       html += '<div class="comment-input-row">';
-      html += '<input type="text" id="comment-input-' + m.id + '" placeholder="Escribe un comentario..." maxlength="200" onkeydown="if(event.key==='Enter')sendComment(' + m.id + ')">';
+      html += '<input type="text" id="comment-input-' + m.id + '" placeholder="Escribe un comentario..." maxlength="200" onkeydown="if(event.key===&apos;Enter&apos;)sendComment(' + m.id + ')">';
       html += '<button onclick="sendComment(' + m.id + ')">Enviar</button>';
       html += '</div>';
     } else {
