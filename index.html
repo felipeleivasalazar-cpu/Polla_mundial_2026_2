@@ -100,7 +100,7 @@ input:focus,select:focus{border-color:var(--accent)}
   <button class="tab active" onclick="switchTab('registro')">👤 Registro</button>
   <button class="tab" onclick="switchTab('pronosticos')">📋 Pronósticos</button>
   <button class="tab" onclick="switchTab('resultados')">🏆 Resultados</button>
-  <button class="tab" onclick="switchTab('admin')">⚙️ Admin</button>
+  <button class="tab" onclick="openAdmin()">⚙️ Admin</button>
 </div>
 
 <div class="container">
@@ -113,6 +113,10 @@ input:focus,select:focus{border-color:var(--accent)}
         <label>Tu nombre</label>
         <input type="text" id="reg-name" placeholder="Ej: Juan Pérez" maxlength="30">
       </div>
+      <div style="margin-bottom:12px">
+        <label>Elige un PIN de 4 dígitos</label>
+        <input type="password" id="reg-pin" placeholder="••••" maxlength="4" inputmode="numeric" style="letter-spacing:.3em;font-size:1.3rem">
+      </div>
       <button class="btn primary full" onclick="registerParticipant()">Unirme →</button>
     </div>
     <div id="participants-list"><p class="loading">Cargando participantes...</p></div>
@@ -121,10 +125,18 @@ input:focus,select:focus{border-color:var(--accent)}
   <!-- PRONÓSTICOS -->
   <div id="view-pronosticos" class="view">
     <div class="card" style="margin-bottom:1rem">
-      <label>Selecciona tu nombre</label>
-      <select id="pronostico-user" onchange="loadUserForm()">
-        <option value="">— Elige tu nombre —</option>
-      </select>
+      <div style="margin-bottom:12px">
+        <label>Selecciona tu nombre</label>
+        <select id="pronostico-user" onchange="clearPinValidation()">
+          <option value="">— Elige tu nombre —</option>
+        </select>
+      </div>
+      <div style="margin-bottom:12px">
+        <label>Tu PIN</label>
+        <input type="password" id="prono-pin" placeholder="••••" maxlength="4" inputmode="numeric" style="letter-spacing:.3em;font-size:1.3rem">
+      </div>
+      <button class="btn primary full" onclick="validateAndLoadForm()">Entrar →</button>
+      <div id="pin-error" style="display:none;color:#ef4444;font-size:.82rem;margin-top:8px;text-align:center"></div>
     </div>
     <div id="matches-form"></div>
     <div id="save-prono-btn" style="display:none">
@@ -140,8 +152,19 @@ input:focus,select:focus{border-color:var(--accent)}
 
   <!-- ADMIN -->
   <div id="view-admin" class="view">
-    <div class="admin-warn">🔒 Solo para el organizador — ingresa los resultados reales</div>
-    <div id="admin-form"></div>
+    <div id="admin-login" class="card" style="margin-bottom:1rem">
+      <div class="card-title">Acceso administrador</div>
+      <div style="margin-bottom:12px">
+        <label>Contraseña</label>
+        <input type="password" id="admin-pass-input" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkAdminPass()">
+      </div>
+      <button class="btn primary full" onclick="checkAdminPass()">Entrar →</button>
+      <div id="admin-pass-error" style="display:none;color:#ef4444;font-size:.82rem;margin-top:8px;text-align:center">Contraseña incorrecta</div>
+    </div>
+    <div id="admin-content" style="display:none">
+      <div class="admin-warn">🔒 Solo para el organizador — ingresa los resultados reales</div>
+      <div id="admin-form"></div>
+    </div>
   </div>
 
 </div>
@@ -150,42 +173,122 @@ input:focus,select:focus{border-color:var(--accent)}
 
 <script>
 // ── DATOS ──────────────────────────────────────────────────
+// Grupos oficiales FIFA Mundial 2026
 const GRUPOS = {
-  A:['Qatar','Ecuador','Senegal','Holanda'],
-  B:['Inglaterra','Irán','USA','Gales'],
-  C:['Argentina','Arabia Saudita','México','Polonia'],
-  D:['Francia','Australia','Dinamarca','Túnez'],
-  E:['España','Costa Rica','Alemania','Japón'],
-  F:['Bélgica','Canadá','Marruecos','Croacia'],
-  G:['Brasil','Serbia','Suiza','Camerún'],
-  H:['Portugal','Ghana','Uruguay','Corea del Sur'],
+  A:['México','Corea del Sur','Sudáfrica','República Checa'],
+  B:['Canadá','Suiza','Qatar','Bosnia y Herzegovina'],
+  C:['Brasil','Marruecos','Escocia','Haití'],
+  D:['USA','Australia','Paraguay','Turquía'],
+  E:['Alemania','Ecuador','Costa de Marfil','Curazao'],
+  F:['Países Bajos','Japón','Túnez','Suecia'],
+  G:['Bélgica','Irán','Egipto','Nueva Zelanda'],
+  H:['España','Uruguay','Arabia Saudita','Cabo Verde'],
+  I:['Francia','Senegal','Noruega','Irak'],
+  J:['Argentina','Austria','Argelia','Jordania'],
+  K:['Portugal','Colombia','Uzbekistán','RD Congo'],
+  L:['Inglaterra','Croacia','Panamá','Ghana'],
 };
 
 const FLAGS = {
-  'Qatar':'🇶🇦','Ecuador':'🇪🇨','Senegal':'🇸🇳','Holanda':'🇳🇱',
-  'Inglaterra':'🏴󠁧󠁢󠁥󠁮󠁧󠁿','Irán':'🇮🇷','USA':'🇺🇸','Gales':'🏴󠁧󠁢󠁷󠁬󠁳󠁿',
-  'Argentina':'🇦🇷','Arabia Saudita':'🇸🇦','México':'🇲🇽','Polonia':'🇵🇱',
-  'Francia':'🇫🇷','Australia':'🇦🇺','Dinamarca':'🇩🇰','Túnez':'🇹🇳',
-  'España':'🇪🇸','Costa Rica':'🇨🇷','Alemania':'🇩🇪','Japón':'🇯🇵',
-  'Bélgica':'🇧🇪','Canadá':'🇨🇦','Marruecos':'🇲🇦','Croacia':'🇭🇷',
-  'Brasil':'🇧🇷','Serbia':'🇷🇸','Suiza':'🇨🇭','Camerún':'🇨🇲',
-  'Portugal':'🇵🇹','Ghana':'🇬🇭','Uruguay':'🇺🇾','Corea del Sur':'🇰🇷'
+  'México':'mx','Corea del Sur':'kr','Sudáfrica':'za','República Checa':'cz',
+  'Canadá':'ca','Suiza':'ch','Qatar':'qa','Bosnia y Herzegovina':'ba',
+  'Brasil':'br','Marruecos':'ma','Escocia':'gb-sct','Haití':'ht',
+  'USA':'us','Australia':'au','Paraguay':'py','Turquía':'tr',
+  'Alemania':'de','Ecuador':'ec','Costa de Marfil':'ci','Curazao':'cw',
+  'Países Bajos':'nl','Japón':'jp','Túnez':'tn','Suecia':'se',
+  'Bélgica':'be','Irán':'ir','Egipto':'eg','Nueva Zelanda':'nz',
+  'España':'es','Uruguay':'uy','Arabia Saudita':'sa','Cabo Verde':'cv',
+  'Francia':'fr','Senegal':'sn','Noruega':'no','Irak':'iq',
+  'Argentina':'ar','Austria':'at','Argelia':'dz','Jordania':'jo',
+  'Portugal':'pt','Colombia':'co','Uzbekistán':'uz','RD Congo':'cd',
+  'Inglaterra':'gb-eng','Croacia':'hr','Panamá':'pa','Ghana':'gh',
 };
 
-function f(t){return FLAGS[t]||'🏳️';}
-
-let MATCHES = [];
-function buildMatches(){
-  let id=1;
-  for(const [g,teams] of Object.entries(GRUPOS)){
-    for(let i=0;i<teams.length;i++){
-      for(let j=i+1;j<teams.length;j++){
-        MATCHES.push({id:id++,group:g,home:teams[i],away:teams[j]});
-      }
-    }
-  }
+function f(t){
+  const code = FLAGS[t];
+  if(!code) return '<span style="font-size:1rem">🏳</span>';
+  return '<img src="https://flagcdn.com/20x15/'+code+'.png" width="20" height="15" alt="'+t+'" style="border-radius:2px;vertical-align:middle;margin-right:3px">';
 }
-buildMatches();
+
+// Partidos con fecha/hora de inicio en hora Chile (CLT = UTC-4 en junio)
+// Fuente: Calendario oficial FIFA Mundial 2026
+const MATCHES = [
+  // --- Jornada 1 ---
+  {id:1,  group:'A', home:'México',         away:'Sudáfrica',          kickoff:'2026-06-06T13:35:00-04:00'},
+  {id:2,  group:'A', home:'Corea del Sur',  away:'República Checa',    kickoff:'2026-06-11T22:00:00-04:00'},
+  {id:3,  group:'B', home:'Canadá',         away:'Bosnia y Herzegovina',kickoff:'2026-06-12T15:00:00-04:00'},
+  {id:4,  group:'D', home:'USA',            away:'Paraguay',           kickoff:'2026-06-12T21:00:00-04:00'},
+  {id:5,  group:'B', home:'Qatar',          away:'Suiza',              kickoff:'2026-06-13T15:00:00-04:00'},
+  {id:6,  group:'C', home:'Brasil',         away:'Marruecos',          kickoff:'2026-06-13T18:00:00-04:00'},
+  {id:7,  group:'C', home:'Haití',          away:'Escocia',            kickoff:'2026-06-13T21:00:00-04:00'},
+  {id:8,  group:'D', home:'Australia',      away:'Turquía',            kickoff:'2026-06-14T00:00:00-04:00'},
+  {id:9,  group:'E', home:'Alemania',       away:'Curazao',            kickoff:'2026-06-14T13:00:00-04:00'},
+  {id:10, group:'F', home:'Países Bajos',   away:'Japón',              kickoff:'2026-06-14T16:00:00-04:00'},
+  {id:11, group:'E', home:'Costa de Marfil',away:'Ecuador',            kickoff:'2026-06-14T19:00:00-04:00'},
+  {id:12, group:'F', home:'Suecia',         away:'Túnez',              kickoff:'2026-06-14T22:00:00-04:00'},
+  {id:13, group:'H', home:'España',         away:'Cabo Verde',         kickoff:'2026-06-15T12:00:00-04:00'},
+  {id:14, group:'G', home:'Bélgica',        away:'Egipto',             kickoff:'2026-06-15T15:00:00-04:00'},
+  {id:15, group:'H', home:'Arabia Saudita', away:'Uruguay',            kickoff:'2026-06-15T18:00:00-04:00'},
+  {id:16, group:'G', home:'Irán',           away:'Nueva Zelanda',      kickoff:'2026-06-15T21:00:00-04:00'},
+  {id:17, group:'I', home:'Francia',        away:'Senegal',            kickoff:'2026-06-16T15:00:00-04:00'},
+  {id:18, group:'I', home:'Irak',           away:'Noruega',            kickoff:'2026-06-16T18:00:00-04:00'},
+  {id:19, group:'J', home:'Argentina',      away:'Argelia',            kickoff:'2026-06-16T21:00:00-04:00'},
+  {id:20, group:'J', home:'Austria',        away:'Jordania',           kickoff:'2026-06-17T00:00:00-04:00'},
+  {id:21, group:'K', home:'Portugal',       away:'RD Congo',           kickoff:'2026-06-17T13:00:00-04:00'},
+  {id:22, group:'L', home:'Inglaterra',     away:'Croacia',            kickoff:'2026-06-17T16:00:00-04:00'},
+  {id:23, group:'L', home:'Ghana',          away:'Panamá',             kickoff:'2026-06-17T19:00:00-04:00'},
+  {id:24, group:'K', home:'Uzbekistán',     away:'Colombia',           kickoff:'2026-06-17T22:00:00-04:00'},
+  // --- Jornada 2 ---
+  {id:25, group:'A', home:'República Checa',away:'Sudáfrica',          kickoff:'2026-06-18T12:00:00-04:00'},
+  {id:26, group:'B', home:'Suiza',          away:'Bosnia y Herzegovina',kickoff:'2026-06-18T15:00:00-04:00'},
+  {id:27, group:'B', home:'Canadá',         away:'Qatar',              kickoff:'2026-06-18T18:00:00-04:00'},
+  {id:28, group:'A', home:'México',         away:'Corea del Sur',      kickoff:'2026-06-18T21:00:00-04:00'},
+  {id:29, group:'D', home:'USA',            away:'Australia',          kickoff:'2026-06-19T15:00:00-04:00'},
+  {id:30, group:'C', home:'Escocia',        away:'Marruecos',          kickoff:'2026-06-19T18:00:00-04:00'},
+  {id:31, group:'C', home:'Brasil',         away:'Haití',              kickoff:'2026-06-19T21:00:00-04:00'},
+  {id:32, group:'D', home:'Turquía',        away:'Paraguay',           kickoff:'2026-06-20T00:00:00-04:00'},
+  {id:33, group:'F', home:'Países Bajos',   away:'Suecia',             kickoff:'2026-06-20T13:00:00-04:00'},
+  {id:34, group:'E', home:'Alemania',       away:'Costa de Marfil',    kickoff:'2026-06-20T16:00:00-04:00'},
+  {id:35, group:'E', home:'Ecuador',        away:'Curazao',            kickoff:'2026-06-20T22:00:00-04:00'},
+  {id:36, group:'F', home:'Túnez',          away:'Japón',              kickoff:'2026-06-21T00:00:00-04:00'},
+  {id:37, group:'G', home:'Bélgica',        away:'Irán',               kickoff:'2026-06-21T12:00:00-04:00'},
+  {id:38, group:'H', home:'España',         away:'Arabia Saudita',     kickoff:'2026-06-21T15:00:00-04:00'},
+  {id:39, group:'G', home:'Egipto',         away:'Nueva Zelanda',      kickoff:'2026-06-21T18:00:00-04:00'},
+  {id:40, group:'H', home:'Uruguay',        away:'Cabo Verde',         kickoff:'2026-06-21T21:00:00-04:00'},
+  {id:41, group:'I', home:'Francia',        away:'Irak',               kickoff:'2026-06-22T12:00:00-04:00'},
+  {id:42, group:'J', home:'Argentina',      away:'Austria',            kickoff:'2026-06-22T15:00:00-04:00'},
+  {id:43, group:'I', home:'Noruega',        away:'Senegal',            kickoff:'2026-06-22T18:00:00-04:00'},
+  {id:44, group:'J', home:'Argelia',        away:'Jordania',           kickoff:'2026-06-22T21:00:00-04:00'},
+  {id:45, group:'K', home:'Portugal',       away:'Uzbekistán',         kickoff:'2026-06-23T12:00:00-04:00'},
+  {id:46, group:'L', home:'Inglaterra',     away:'Ghana',              kickoff:'2026-06-23T15:00:00-04:00'},
+  {id:47, group:'L', home:'Croacia',        away:'Panamá',             kickoff:'2026-06-23T18:00:00-04:00'},
+  {id:48, group:'K', home:'Colombia',       away:'RD Congo',           kickoff:'2026-06-23T21:00:00-04:00'},
+  // --- Jornada 3 (simultáneos) ---
+  {id:49, group:'A', home:'México',         away:'República Checa',    kickoff:'2026-06-24T21:00:00-04:00'},
+  {id:50, group:'A', home:'Sudáfrica',      away:'Corea del Sur',      kickoff:'2026-06-24T21:00:00-04:00'},
+  {id:51, group:'B', home:'Bosnia y Herzegovina',away:'Qatar',         kickoff:'2026-06-25T17:00:00-04:00'},
+  {id:52, group:'B', home:'Suiza',          away:'Canadá',             kickoff:'2026-06-25T17:00:00-04:00'},
+  {id:53, group:'C', home:'Brasil',         away:'Escocia',            kickoff:'2026-06-25T21:00:00-04:00'},
+  {id:54, group:'C', home:'Marruecos',      away:'Haití',              kickoff:'2026-06-25T21:00:00-04:00'},
+  {id:55, group:'D', home:'USA',            away:'Turquía',            kickoff:'2026-06-26T17:00:00-04:00'},
+  {id:56, group:'D', home:'Paraguay',       away:'Australia',          kickoff:'2026-06-26T17:00:00-04:00'},
+  {id:57, group:'E', home:'Alemania',       away:'Ecuador',            kickoff:'2026-06-26T21:00:00-04:00'},
+  {id:58, group:'E', home:'Costa de Marfil',away:'Curazao',            kickoff:'2026-06-26T21:00:00-04:00'},
+  {id:59, group:'F', home:'Países Bajos',   away:'Túnez',              kickoff:'2026-06-27T17:00:00-04:00'},
+  {id:60, group:'F', home:'Japón',          away:'Suecia',             kickoff:'2026-06-27T17:00:00-04:00'},
+  {id:61, group:'G', home:'Bélgica',        away:'Nueva Zelanda',      kickoff:'2026-06-27T21:00:00-04:00'},
+  {id:62, group:'G', home:'Egipto',         away:'Irán',               kickoff:'2026-06-27T21:00:00-04:00'},
+  {id:63, group:'H', home:'España',         away:'Uruguay',            kickoff:'2026-06-24T17:00:00-04:00'},
+  {id:64, group:'H', home:'Cabo Verde',     away:'Arabia Saudita',     kickoff:'2026-06-24T17:00:00-04:00'},
+  {id:65, group:'I', home:'Francia',        away:'Noruega',            kickoff:'2026-06-24T13:00:00-04:00'},
+  {id:66, group:'I', home:'Senegal',        away:'Irak',               kickoff:'2026-06-24T13:00:00-04:00'},
+  {id:67, group:'J', home:'Argentina',      away:'Jordania',           kickoff:'2026-06-25T13:00:00-04:00'},
+  {id:68, group:'J', home:'Argelia',        away:'Austria',            kickoff:'2026-06-25T13:00:00-04:00'},
+  {id:69, group:'K', home:'Portugal',       away:'Colombia',           kickoff:'2026-06-26T13:00:00-04:00'},
+  {id:70, group:'K', home:'RD Congo',       away:'Uzbekistán',         kickoff:'2026-06-26T13:00:00-04:00'},
+  {id:71, group:'L', home:'Inglaterra',     away:'Panamá',             kickoff:'2026-06-27T13:00:00-04:00'},
+  {id:72, group:'L', home:'Ghana',          away:'Croacia',            kickoff:'2026-06-27T13:00:00-04:00'},
+];
 
 // ── API ────────────────────────────────────────────────────
 let API_URL = localStorage.getItem('mundial_api_url') || 'https://script.google.com/macros/s/AKfycbyeBjfXfnTqZsHW4Cvs1cQmzm4njEbH8g4tq-lJqEmqYVIwv_mqBp6LCg4RQ1F36DtBvQ/exec';
@@ -248,7 +351,7 @@ function switchTab(tab){
   event.currentTarget.classList.add('active');
   document.getElementById('view-'+tab).classList.add('active');
   if(tab==='resultados'){renderLeaderboard();renderResultsList();}
-  if(tab==='admin'){renderAdmin();}
+  // admin handled by openAdmin()
   if(tab==='pronosticos'){updateSelects();loadUserForm();}
   if(tab==='registro'){renderParticipants();}
 }
@@ -273,13 +376,16 @@ function renderParticipants(){
 
 async function registerParticipant(){
   const n = document.getElementById('reg-name').value.trim();
+  const pin = document.getElementById('reg-pin').value.trim();
   if(!n){toast('Ingresa tu nombre');return;}
+  if(!/^\d{4}$/.test(pin)){toast('El PIN debe ser de 4 dígitos');return;}
   if(state.participants.includes(n)){toast('Ese nombre ya existe');return;}
-  const r = await apiPost({action:'registerParticipant',name:n});
+  const r = await apiPost({action:'registerParticipant',name:n,pin:pin});
   if(!r) return;
   if(r.error){toast(r.error);return;}
   state.participants.push(n);
   document.getElementById('reg-name').value='';
+  document.getElementById('reg-pin').value='';
   renderParticipants();
   updateSelects();
   toast('¡'+n+' se unió! 🎉');
@@ -293,26 +399,69 @@ function updateSelects(){
     state.participants.map(p=>`<option value="${p}"${p===cur?' selected':''}>${p}</option>`).join('');
 }
 
-function loadUserForm(){
+function clearPinValidation(){
+  document.getElementById('matches-form').innerHTML='';
+  document.getElementById('save-prono-btn').style.display='none';
+  document.getElementById('pin-error').style.display='none';
+}
+
+async function validateAndLoadForm(){
   const user = document.getElementById('pronostico-user').value;
+  const pin = document.getElementById('prono-pin').value.trim();
+  const errEl = document.getElementById('pin-error');
+  errEl.style.display='none';
+  if(!user){toast('Selecciona tu nombre');return;}
+  if(!pin){toast('Ingresa tu PIN');return;}
+  const r = await apiPost({action:'validatePin',name:user,pin:pin});
+  if(!r) return;
+  if(r.error || !r.ok){
+    errEl.textContent='PIN incorrecto. Intenta de nuevo.';
+    errEl.style.display='block';
+    return;
+  }
+  loadUserForm(user);
+}
+
+function isLocked(m){
+  return new Date() >= new Date(m.kickoff);
+}
+
+function fmtKickoff(m){
+  const d = new Date(m.kickoff);
+  const dias = ['Dom','Lun','Mar','Mie','Jue','Vie','Sab'];
+  const meses = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+  const dia = dias[d.getDay()];
+  const fecha = d.getDate()+' '+meses[d.getMonth()];
+  const hora = d.getHours().toString().padStart(2,'0')+':'+d.getMinutes().toString().padStart(2,'0');
+  return dia+' '+fecha+' - '+hora+' hrs Chile';
+}
+
+function loadUserForm(user){
   const form = document.getElementById('matches-form');
   const btn = document.getElementById('save-prono-btn');
   if(!user){form.innerHTML='';btn.style.display='none';return;}
   btn.style.display='block';
   const existing = state.pronosticos[user]||{};
   let html='';
-  for(const [g,teams] of Object.entries(GRUPOS)){
+  const groups = [...new Set(MATCHES.map(m=>m.group))];
+  for(const g of groups){
     const gMatches = MATCHES.filter(m=>m.group===g);
-    html+=`<div class="group-label">Grupo ${g}</div><div class="card">`;
+    html+='<div class="group-label">Grupo '+g+'</div><div class="card">';
     gMatches.forEach(m=>{
       const p=existing[m.id]||{h:'',a:''};
-      html+=`<div class="match-row">
-        <span class="team-name right">${f(m.home)} ${m.home}</span>
-        <div class="score-box"><input type="number" min="0" max="20" id="h${m.id}" value="${p.h}" placeholder="0"></div>
-        <span class="vs">-</span>
-        <div class="score-box"><input type="number" min="0" max="20" id="a${m.id}" value="${p.a}" placeholder="0"></div>
-        <span class="team-name">${f(m.away)} ${m.away}</span>
-      </div>`;
+      const locked=isLocked(m);
+      const rowStyle=locked?'opacity:.45;':'';
+      const lockIcon=locked?'🔒 ':'🕐 ';
+      const timeColor=locked?'#ef4444':'var(--muted)';
+      const dis=locked?'disabled':'';
+      html+='<div class="match-row" style="'+rowStyle+'">';
+      html+='<span class="team-name right">'+f(m.home)+' '+m.home+'</span>';
+      html+='<div class="score-box"><input type="number" min="0" max="20" id="h'+m.id+'" value="'+p.h+'" placeholder="0" '+dis+'></div>';
+      html+='<span class="vs">-</span>';
+      html+='<div class="score-box"><input type="number" min="0" max="20" id="a'+m.id+'" value="'+p.a+'" placeholder="0" '+dis+'></div>';
+      html+='<span class="team-name">'+f(m.away)+' '+m.away+'</span>';
+      html+='</div>';
+      html+='<div style="font-size:.7rem;color:'+timeColor+';text-align:center;padding:2px 0 7px;border-bottom:1px solid var(--border)">'+lockIcon+fmtKickoff(m)+'</div>';
     });
     html+='</div>';
   }
@@ -330,7 +479,8 @@ async function savePronosticos(){
       data[m.id]={h:parseInt(h.value),a:parseInt(a.value)};
   });
   if(!Object.keys(data).length){toast('Ingresa al menos un partido');return;}
-  const r = await apiPost({action:'savePronosticos',user,pronosticos:data});
+  const pin = document.getElementById('prono-pin').value.trim();
+  const r = await apiPost({action:'savePronosticos',user,pin,pronosticos:data});
   if(!r) return;
   if(r.error){toast(r.error);return;}
   state.pronosticos[user]=data;
@@ -446,6 +596,44 @@ function toast(msg){
   const t=document.getElementById('toast');
   t.textContent=msg;t.classList.add('show');
   setTimeout(()=>t.classList.remove('show'),2500);
+}
+
+// ── ADMIN LOGIN ───────────────────────────────────────────────
+const ADMIN_PASSWORD = 'Manzana77'; // ← Cambia esta contraseña
+
+function openAdmin(){
+  // Cambiar tab activo
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  document.querySelector("[onclick='openAdmin()']").classList.add('active');
+  document.getElementById('view-admin').classList.add('active');
+  // Si ya estaba autenticado, mostrar directo
+  if(sessionStorage.getItem('adminOk')==='1'){
+    showAdminContent();
+  } else {
+    document.getElementById('admin-login').style.display='block';
+    document.getElementById('admin-content').style.display='none';
+    document.getElementById('admin-pass-input').value='';
+    document.getElementById('admin-pass-error').style.display='none';
+    setTimeout(()=>document.getElementById('admin-pass-input').focus(),100);
+  }
+}
+
+function checkAdminPass(){
+  const val = document.getElementById('admin-pass-input').value;
+  if(val === ADMIN_PASSWORD){
+    sessionStorage.setItem('adminOk','1');
+    showAdminContent();
+  } else {
+    document.getElementById('admin-pass-error').style.display='block';
+    document.getElementById('admin-pass-input').value='';
+  }
+}
+
+function showAdminContent(){
+  document.getElementById('admin-login').style.display='none';
+  document.getElementById('admin-content').style.display='block';
+  renderAdmin();
 }
 
 // ── INIT ───────────────────────────────────────────────────
