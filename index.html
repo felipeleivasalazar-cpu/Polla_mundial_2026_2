@@ -145,7 +145,8 @@ input:focus,select:focus{border-color:var(--accent)}
   <!-- REGISTRO -->
   <div id="view-registro" class="view">
     <div class="card">
-      <div class="card-title">Unirse a la polla</div>
+      <div class="card-title">Crear cuenta</div>
+      <div style="background:rgba(232,200,74,.08);border:1px solid rgba(232,200,74,.2);border-radius:8px;padding:8px 12px;font-size:.82rem;color:var(--accent);margin-bottom:12px">⏳ Tu cuenta quedará pendiente hasta que el administrador la apruebe</div>
       <div style="margin-bottom:12px">
         <label>Tu nombre</label>
         <input type="text" id="reg-name" placeholder="Ej: Juan Pérez" maxlength="30">
@@ -174,6 +175,7 @@ input:focus,select:focus{border-color:var(--accent)}
       </div>
       <button class="btn primary full" onclick="validateAndLoadForm()">Entrar →</button>
       <div id="pin-error" style="display:none;color:#ef4444;font-size:.82rem;margin-top:8px;text-align:center"></div>
+      <p style="text-align:center;margin-top:14px;font-size:.83rem;color:var(--muted)">¿No tienes cuenta? <a href="#" onclick="switchTabByName('registro')" style="color:var(--accent);text-decoration:none;font-weight:600">Regístrate aquí</a></p>
     </div>
     <div id="matches-form"></div>
     <div id="save-prono-btn" style="display:none">
@@ -202,6 +204,7 @@ input:focus,select:focus{border-color:var(--accent)}
     </div>
     <div id="admin-content" style="display:none">
       <div class="admin-warn">🔒 Solo para el organizador — ingresa los resultados reales</div>
+      <div id="admin-approvals" style="margin-bottom:1rem"></div>
       <div id="admin-form"></div>
     </div>
   </div>
@@ -253,7 +256,7 @@ function f(t){
 // Fuente: Calendario oficial FIFA Mundial 2026
 const MATCHES = [
   // --- Jornada 1 ---
-  {id:1,  group:'A', home:'México',         away:'Sudáfrica',          kickoff:'2026-06-06T15:40:00-04:00'},
+  {id:1,  group:'A', home:'México',         away:'Sudáfrica',          kickoff:'2026-06-06T16:00:00-04:00'},
   {id:2,  group:'A', home:'Corea del Sur',  away:'República Checa',    kickoff:'2026-06-11T22:00:00-04:00'},
   {id:3,  group:'B', home:'Canadá',         away:'Bosnia y Herzegovina',kickoff:'2026-06-12T15:00:00-04:00'},
   {id:4,  group:'D', home:'USA',            away:'Paraguay',           kickoff:'2026-06-12T21:00:00-04:00'},
@@ -364,7 +367,7 @@ async function apiPost(body){
 }
 
 // ── STATE ──────────────────────────────────────────────────
-let state = {participants:[],pronosticos:{},results:{},comments:[]};
+let state = {participants:[],pronosticos:{},results:{},comments:[],pending:[]};
 
 async function loadAll(){
   const data = await apiGet();
@@ -406,9 +409,11 @@ function renderParticipants(){
     <div class="participant-row">
       <div class="avatar">${p.substring(0,2).toUpperCase()}</div>
       <span style="flex:1;font-weight:500">${p}</span>
-      ${state.pronosticos[p]&&Object.keys(state.pronosticos[p]).length>0
-        ?'<span class="pill result">Pronosticó</span>'
-        :'<span class="pill pending">Pendiente</span>'}
+      ${state.pending && state.pending.includes(p)
+        ? '<span class="pill" style="background:rgba(239,68,68,.15);color:#ef4444">Pendiente aprobación</span>'
+        : state.pronosticos[p]&&Object.keys(state.pronosticos[p]).length>0
+          ? '<span class="pill result">Pronosticó</span>'
+          : '<span class="pill pending">Sin pronóstico</span>'}
     </div>`).join('')+
   '</div>';
 }
@@ -436,6 +441,15 @@ function updateSelects(){
   const cur = sel.value;
   sel.innerHTML='<option value="">— Elige tu nombre —</option>'+
     state.participants.map(p=>`<option value="${p}"${p===cur?' selected':''}>${p}</option>`).join('');
+}
+
+function switchTabByName(tab){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+  const btn = document.querySelector("[onclick="switchTab('"+tab+"')"]");
+  if(btn) btn.classList.add('active');
+  document.getElementById('view-'+tab).classList.add('active');
+  if(tab==='registro') renderParticipants();
 }
 
 function clearPinValidation(){
@@ -667,6 +681,50 @@ function renderPronosticosView(){
   c.innerHTML = html;
 }
 
+// ── APROBACIONES ──────────────────────────────────────────────
+function renderApprovals(){
+  const c = document.getElementById('admin-approvals');
+  const pending = state.pending || [];
+  if(!pending.length){
+    c.innerHTML='<div class="card" style="margin-bottom:10px"><p style="font-size:.88rem;color:var(--muted)">✓ No hay cuentas pendientes de aprobación</p></div>';
+    return;
+  }
+  let html = '<div class="card" style="margin-bottom:10px"><div class="card-title">Cuentas pendientes ('+pending.length+')</div>';
+  pending.forEach(p => {
+    html += '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">';
+    html += '<div class="avatar">'+p.substring(0,2).toUpperCase()+'</div>';
+    html += '<span style="flex:1;font-weight:500">'+p+'</span>';
+    html += '<button class="btn" style="padding:5px 12px;font-size:.8rem;color:var(--green);border-color:var(--green)" onclick="approveUser(''+p+'')">Aprobar</button>';
+    html += '<button class="btn" style="padding:5px 12px;font-size:.8rem;color:#ef4444;border-color:#ef4444;margin-left:4px" onclick="rejectUser(''+p+'')">Rechazar</button>';
+    html += '</div>';
+  });
+  html += '</div>';
+  c.innerHTML = html;
+}
+
+async function approveUser(name){
+  const r = await apiPost({action:'approveUser', name, approved:'true'});
+  if(!r) return;
+  if(r.error){toast(r.error);return;}
+  state.pending = (state.pending||[]).filter(p=>p!==name);
+  if(!state.participants.includes(name)) state.participants.push(name);
+  renderApprovals();
+  renderParticipants();
+  updateSelects();
+  toast(name+' aprobado ✓');
+}
+
+async function rejectUser(name){
+  if(!confirm('¿Rechazar y eliminar a '+name+'?')) return;
+  const r = await apiPost({action:'approveUser', name, approved:'false'});
+  if(!r) return;
+  if(r.error){toast(r.error);return;}
+  state.pending = (state.pending||[]).filter(p=>p!==name);
+  renderApprovals();
+  renderParticipants();
+  toast(name+' rechazado');
+}
+
 // ── ADMIN ──────────────────────────────────────────────────
 function renderAdmin(){
   const c=document.getElementById('admin-form');
@@ -742,6 +800,7 @@ function checkAdminPass(){
 function showAdminContent(){
   document.getElementById('admin-login').style.display='none';
   document.getElementById('admin-content').style.display='block';
+  renderApprovals();
   renderAdmin();
 }
 
