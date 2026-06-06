@@ -77,6 +77,16 @@ input:focus,select:focus{border-color:var(--accent)}
 .loading{text-align:center;color:var(--muted);padding:1.5rem 0;font-size:.9rem}
 .result-score{font-family:'Barlow Condensed',sans-serif;font-size:1.3rem;font-weight:700;min-width:26px;text-align:center}
 .admin-warn{background:rgba(232,200,74,.08);border:1px solid rgba(232,200,74,.25);border-radius:8px;padding:.75rem 1rem;font-size:.85rem;color:var(--accent);margin-bottom:1rem}
+.prono-table{width:100%;border-collapse:collapse;font-size:.82rem}
+.prono-table th{color:var(--muted);font-weight:500;padding:5px 8px;text-align:center;border-bottom:1px solid var(--border)}
+.prono-table th.left{text-align:left}
+.prono-table td{padding:6px 8px;text-align:center;border-bottom:1px solid var(--border)}
+.prono-table td.left{text-align:left;font-weight:500}
+.prono-table tr:last-child td{border-bottom:none}
+.prono-exact{color:var(--green);font-weight:700}
+.prono-result{color:var(--accent2);font-weight:600}
+.prono-miss{color:var(--muted)}
+.prono-pending{color:var(--muted);font-style:italic;font-size:.75rem}
 .cd-block{display:flex;flex-direction:column;align-items:center;min-width:48px}
 .cd-num{font-family:'Barlow Condensed',sans-serif;font-size:2rem;font-weight:800;color:var(--accent);line-height:1}
 .cd-unit{font-size:.65rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
@@ -164,6 +174,7 @@ input:focus,select:focus{border-color:var(--accent)}
   <div id="view-resultados" class="view">
     <div id="leaderboard"></div>
     <div id="results-list" style="margin-top:1.5rem"></div>
+    <div id="pronosticos-view" style="margin-top:1.5rem"></div>
   </div>
 
   <!-- ADMIN -->
@@ -366,7 +377,7 @@ function switchTab(tab){
   document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
   event.currentTarget.classList.add('active');
   document.getElementById('view-'+tab).classList.add('active');
-  if(tab==='resultados'){renderLeaderboard();renderResultsList();}
+  if(tab==='resultados'){renderLeaderboard();renderResultsList();renderPronosticosView();}
   // admin handled by openAdmin()
   if(tab==='pronosticos'){updateSelects();loadUserForm();}
   if(tab==='registro'){renderParticipants();}
@@ -574,6 +585,72 @@ function renderResultsList(){
     html+='</div>';
   }
   c.innerHTML=html;
+}
+
+// ── PRONÓSTICOS VISTA PÚBLICA ─────────────────────────────────
+function renderPronosticosView(){
+  const c = document.getElementById('pronosticos-view');
+  // Solo partidos bloqueados (kickoff ya pasó)
+  const locked = MATCHES.filter(m => isLocked(m));
+  if(!locked.length){
+    c.innerHTML = '';
+    return;
+  }
+
+  const byGroup = {};
+  locked.forEach(m => {
+    if(!byGroup[m.group]) byGroup[m.group] = [];
+    byGroup[m.group].push(m);
+  });
+
+  let html = '<div class="section-divider">Pronósticos revelados</div>';
+
+  for(const [g, ms] of Object.entries(byGroup)){
+    html += '<div class="group-label">Grupo ' + g + '</div>';
+    ms.forEach(m => {
+      const real = state.results[m.id];
+      html += '<div class="card" style="margin-bottom:10px">';
+      // Cabecera del partido
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">';
+      html += '<span style="font-size:.9rem;font-weight:600">' + f(m.home) + ' ' + m.home + ' vs ' + f(m.away) + ' ' + m.away + '</span>';
+      if(real){
+        html += '<span style="font-family:'Barlow Condensed',sans-serif;font-size:1.2rem;font-weight:700;color:var(--accent)">' + real.h + ' - ' + real.a + '</span>';
+      } else {
+        html += '<span class="pill pending">En curso</span>';
+      }
+      html += '</div>';
+
+      // Tabla de pronósticos
+      html += '<table class="prono-table"><thead><tr>';
+      html += '<th class="left">Participante</th>';
+      html += '<th>Pronóstico</th>';
+      html += '<th>Puntos</th>';
+      html += '</tr></thead><tbody>';
+
+      state.participants.forEach(p => {
+        const prono = state.pronosticos[p] && state.pronosticos[p][m.id];
+        html += '<tr>';
+        html += '<td class="left">' + p + '</td>';
+
+        if(!prono){
+          html += '<td class="prono-pending">No pronosticó</td><td>—</td>';
+        } else {
+          const pronoStr = prono.h + ' - ' + prono.a;
+          let pts = 0, cls = 'prono-miss';
+          if(real){
+            if(prono.h === real.h && prono.a === real.a){ pts = 3; cls = 'prono-exact'; }
+            else if(calcWinner(prono.h, prono.a) === calcWinner(real.h, real.a)){ pts = 1; cls = 'prono-result'; }
+          }
+          html += '<td class="' + cls + '">' + pronoStr + '</td>';
+          html += '<td>' + (real ? (pts > 0 ? '+' + pts : '0') : '—') + '</td>';
+        }
+        html += '</tr>';
+      });
+
+      html += '</tbody></table></div>';
+    });
+  }
+  c.innerHTML = html;
 }
 
 // ── ADMIN ──────────────────────────────────────────────────
