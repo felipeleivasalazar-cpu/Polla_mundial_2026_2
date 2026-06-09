@@ -666,7 +666,6 @@ function loadUserForm(user){
     const gMatches = MATCHES.filter(m=>m.group===g);
     html+='<div class="group-label">Grupo '+g+'</div><div class="card">';
     gMatches.forEach(m=>{
-    gMatches.forEach(m=>{
       const p=existing[m.id]||{h:'',a:''};
       const locked=isLocked(m);
       const saved=existing[m.id]&&existing[m.id].h!==''&&existing[m.id].a!=='';
