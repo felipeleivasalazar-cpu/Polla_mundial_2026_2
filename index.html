@@ -201,6 +201,17 @@ input:focus,select:focus{border-color:var(--accent)}
       <div id="pin-error" style="display:none;color:#ef4444;font-size:.82rem;margin-top:8px;text-align:center"></div>
       <p style="text-align:center;margin-top:14px;font-size:.83rem;color:var(--muted)">¿No tienes cuenta? <a href="#" onclick="switchTabByName('registro')" style="color:var(--accent);text-decoration:none;font-weight:600">Regístrate aquí</a></p>
     </div>
+    <div id="prono-progress" style="display:none;margin-bottom:12px">
+      <div class="card" style="background:rgba(34,197,94,.07);border-color:rgba(34,197,94,.25);padding:.75rem 1rem">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:.85rem;color:var(--muted)">Partidos pronosticados</span>
+          <span id="prono-progress-text" style="font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:700;color:#22c55e">0 / 72</span>
+        </div>
+        <div style="margin-top:6px;background:rgba(255,255,255,.08);border-radius:999px;height:6px;overflow:hidden">
+          <div id="prono-progress-bar" style="height:100%;background:#22c55e;border-radius:999px;transition:width .4s;width:0%"></div>
+        </div>
+      </div>
+    </div>
     <div id="matches-form"></div>
     <div id="save-prono-btn" style="display:none">
       <button class="btn primary full" onclick="savePronosticos()">Guardar pronósticos →</button>
@@ -298,6 +309,28 @@ input:focus,select:focus{border-color:var(--accent)}
         <p style="font-size:.85rem;color:var(--muted)">No compartas tu PIN con nadie. Es la única forma de modificar tus pronósticos. Si lo olvidas, contacta al administrador.</p>
       </div>
 
+      <div style="border-left:3px solid var(--accent);padding-left:12px;margin-bottom:1.2rem">
+        <p style="font-size:.95rem;font-weight:600;margin-bottom:6px">7. Cuota y premios</p>
+        <p style="font-size:.85rem;color:var(--muted);margin-bottom:8px">La cuota de participación es de <strong id="howto-cuota" style="color:var(--accent);font-size:1rem">$ 20.000</strong> por jugador.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <div style="background:rgba(232,200,74,.1);border:1px solid rgba(232,200,74,.25);border-radius:8px;padding:8px 12px;flex:1;min-width:80px;text-align:center">
+            <div style="font-size:1.3rem">🥇</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:700;color:var(--accent)" id="howto-prize-1">60%</div>
+            <div style="font-size:.72rem;color:var(--muted)" id="howto-prize-1-amt"></div>
+          </div>
+          <div style="background:rgba(148,163,184,.08);border:1px solid rgba(148,163,184,.2);border-radius:8px;padding:8px 12px;flex:1;min-width:80px;text-align:center">
+            <div style="font-size:1.3rem">🥈</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:700;color:#94a3b8" id="howto-prize-2">30%</div>
+            <div style="font-size:.72rem;color:var(--muted)" id="howto-prize-2-amt"></div>
+          </div>
+          <div style="background:rgba(205,124,61,.08);border:1px solid rgba(205,124,61,.2);border-radius:8px;padding:8px 12px;flex:1;min-width:80px;text-align:center">
+            <div style="font-size:1.3rem">🥉</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:700;color:#cd7c3d" id="howto-prize-3">10%</div>
+            <div style="font-size:.72rem;color:var(--muted)" id="howto-prize-3-amt"></div>
+          </div>
+        </div>
+      </div>
+
       <div style="background:rgba(232,200,74,.08);border:1px solid rgba(232,200,74,.2);border-radius:8px;padding:10px 14px;font-size:.83rem;color:var(--accent)">
         ⚽ ¡Buena suerte a todos! El que más puntos acumule al final de la fase de grupos gana.
       </div>
@@ -351,8 +384,8 @@ function f(t){
 // Fuente: Calendario oficial FIFA Mundial 2026
 const MATCHES = [
   // --- Jornada 1 ---
-  {id:1,  group:'A', home:'México',         away:'Sudáfrica',          kickoff:'2026-06-09T14:46:00-04:00'},
-  {id:2,  group:'A', home:'Corea del Sur',  away:'República Checa',    kickoff:'2026-06-09T14:50:00-04:00'},
+  {id:1,  group:'A', home:'México',         away:'Sudáfrica',          kickoff:'2026-06-11T15:00:00-04:00'},
+  {id:2,  group:'A', home:'Corea del Sur',  away:'República Checa',    kickoff:'2026-06-11T22:00:00-04:00'},
   {id:3,  group:'B', home:'Canadá',         away:'Bosnia y Herzegovina',kickoff:'2026-06-12T15:00:00-04:00'},
   {id:4,  group:'D', home:'USA',            away:'Paraguay',           kickoff:'2026-06-12T21:00:00-04:00'},
   {id:5,  group:'B', home:'Qatar',          away:'Suiza',              kickoff:'2026-06-13T15:00:00-04:00'},
@@ -573,6 +606,38 @@ async function validateAndLoadForm(){
   sessionStorage.setItem('pronoUser', user);
   sessionStorage.setItem('pronoPin', pinVal);
   loadUserForm(user);
+  setTimeout(()=>updateProgressBar(user), 100);
+}
+
+function updateProgressBar(user){
+  const existing = state.pronosticos[user]||{};
+  const total = MATCHES.filter(m=>!isLocked(m)).length;
+  const filled = MATCHES.filter(m=>{
+    const h=document.getElementById('h'+m.id);
+    const a=document.getElementById('a'+m.id);
+    return h&&a&&h.value!==''&&a.value!=='';
+  }).length;
+  const savedCount = Object.keys(existing).length;
+  const progressEl = document.getElementById('prono-progress');
+  const textEl = document.getElementById('prono-progress-text');
+  const barEl = document.getElementById('prono-progress-bar');
+  if(progressEl) progressEl.style.display='block';
+  if(textEl) textEl.textContent = savedCount + ' / 72';
+  if(barEl) barEl.style.width = Math.round((savedCount/72)*100)+'%';
+}
+
+function updateCheck(matchId){
+  const h=document.getElementById('h'+matchId);
+  const a=document.getElementById('a'+matchId);
+  const check=document.getElementById('check'+matchId);
+  if(!check) return;
+  if(h&&a&&h.value!==''&&a.value!==''){
+    check.textContent='✏️';
+    check.style.fontSize='1rem';
+  } else {
+    check.textContent='—';
+    check.style.fontSize='.8rem';
+  }
 }
 
 function isLocked(m){
@@ -638,7 +703,13 @@ async function savePronosticos(){
   if(r.error){toast(r.error);return;}
   state.pronosticos[user]=data;
   renderParticipants();
-  toast('Pronósticos de '+user+' guardados ✓');
+  // Marcar todos los partidos guardados con ✅
+  Object.keys(data).forEach(id=>{
+    const check=document.getElementById('check'+id);
+    if(check){check.textContent='✅';check.style.fontSize='1rem';}
+  });
+  updateProgressBar(user);
+  toast('Pronósticos guardados ✓ ('+Object.keys(data).length+' partidos)');
 }
 
 // ── PUNTAJE ────────────────────────────────────────────────
@@ -946,10 +1017,20 @@ function formatPesos(n){
 }
 function updatePozoBanner(){
   const total = state.totalPozo || 0;
+  const cuota = state.cuota || 20000;
   document.getElementById('pozo-amount').textContent = formatPesos(total);
   document.getElementById('pozo-1').textContent = formatPesos(total * 0.6);
   document.getElementById('pozo-2').textContent = formatPesos(total * 0.3);
   document.getElementById('pozo-3').textContent = formatPesos(total * 0.1);
+  // Actualizar instrucciones
+  const howCuota = document.getElementById('howto-cuota');
+  if(howCuota) howCuota.textContent = formatPesos(cuota);
+  const p1amt = document.getElementById('howto-prize-1-amt');
+  const p2amt = document.getElementById('howto-prize-2-amt');
+  const p3amt = document.getElementById('howto-prize-3-amt');
+  if(p1amt) p1amt.textContent = total > 0 ? formatPesos(total*0.6) : '';
+  if(p2amt) p2amt.textContent = total > 0 ? formatPesos(total*0.3) : '';
+  if(p3amt) p3amt.textContent = total > 0 ? formatPesos(total*0.1) : '';
 }
 
 // ── COUNTDOWN ─────────────────────────────────────────────────
