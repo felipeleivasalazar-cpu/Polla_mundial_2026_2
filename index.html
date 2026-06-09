@@ -469,7 +469,7 @@ async function validateAndLoadForm(){
   const r = await apiPost({action:'validatePin',name:user,pin:pin});
   if(!r) return;
   if(r.error || !r.ok){
-    errEl.textContent='PIN incorrecto. Intenta de nuevo.';
+    errEl.textContent = r.error || 'PIN incorrecto. Intenta de nuevo.';
     errEl.style.display='block';
     return;
   }
