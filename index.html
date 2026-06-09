@@ -178,6 +178,14 @@ input:focus,select:focus{border-color:var(--accent)}
 
   <!-- PRONÓSTICOS -->
   <div id="view-pronosticos" class="view active">
+    <div class="card" style="margin-bottom:1rem;background:rgba(232,200,74,.05);border-color:rgba(232,200,74,.2)">
+      <p style="font-size:.85rem;color:var(--muted);line-height:1.5">
+        🎯 <strong style="color:var(--text)">+3 pts</strong> por marcador exacto &nbsp;·&nbsp;
+        <strong style="color:var(--text)">+1 pt</strong> por resultado correcto &nbsp;·&nbsp;
+        <strong style="color:var(--text)">🔒 bloqueo</strong> al pitazo inicial
+      </p>
+      <a href="#" onclick="switchTab('howto')" style="font-size:.8rem;color:var(--accent);text-decoration:none;font-weight:600;display:inline-block;margin-top:6px">Ver instrucciones completas →</a>
+    </div>
     <div class="card" style="margin-bottom:1rem">
       <div style="margin-bottom:12px">
         <label>Selecciona tu nombre</label>
@@ -238,6 +246,66 @@ input:focus,select:focus{border-color:var(--accent)}
 
 </div>
 
+  <!-- CÓMO JUGAR -->
+  <div id="view-howto" class="view">
+    <div class="card">
+      <div class="card-title">🏆 ¿Cómo funciona la polla?</div>
+      <p style="font-size:.9rem;color:var(--muted);margin-bottom:1rem">Bienvenido a la Polla Mundial 2026. Aquí puedes pronosticar los resultados de los 72 partidos de la fase de grupos y competir con tus amigos.</p>
+
+      <div style="border-left:3px solid var(--accent);padding-left:12px;margin-bottom:1.2rem">
+        <p style="font-size:.95rem;font-weight:600;margin-bottom:4px">1. Crea tu cuenta</p>
+        <p style="font-size:.85rem;color:var(--muted)">Ve a <strong style="color:var(--text)">✚ Registrarse</strong> e ingresa tu nombre y un PIN de 4 dígitos. Tu cuenta quedará pendiente hasta que el administrador la apruebe.</p>
+      </div>
+
+      <div style="border-left:3px solid var(--accent);padding-left:12px;margin-bottom:1.2rem">
+        <p style="font-size:.95rem;font-weight:600;margin-bottom:4px">2. Ingresa tus pronósticos</p>
+        <p style="font-size:.85rem;color:var(--muted)">Ve a <strong style="color:var(--text)">📋 Pronósticos</strong>, selecciona tu nombre e ingresa tu PIN. Completa el marcador que predices para cada partido y presiona <strong style="color:var(--text)">Guardar pronósticos</strong>. Puedes modificarlos cuantas veces quieras antes de que comience cada partido.</p>
+      </div>
+
+      <div style="border-left:3px solid var(--accent);padding-left:12px;margin-bottom:1.2rem">
+        <p style="font-size:.95rem;font-weight:600;margin-bottom:4px">3. Bloqueo de partidos</p>
+        <p style="font-size:.85rem;color:var(--muted)">Al momento exacto del pitazo inicial, el partido se <strong style="color:#ef4444">🔒 bloquea automáticamente</strong> y ya no puedes modificar ese pronóstico. La página se actualiza sola, no necesitas refrescar.</p>
+      </div>
+
+      <div style="border-left:3px solid var(--accent);padding-left:12px;margin-bottom:1.2rem">
+        <p style="font-size:.95rem;font-weight:600;margin-bottom:4px">4. Sistema de puntos</p>
+        <div style="display:flex;gap:10px;margin-top:6px;flex-wrap:wrap">
+          <div style="background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);border-radius:8px;padding:10px 14px;text-align:center;flex:1;min-width:100px">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:2rem;font-weight:800;color:#22c55e">+3</div>
+            <div style="font-size:.78rem;color:var(--muted)">Marcador exacto</div>
+            <div style="font-size:.72rem;color:var(--muted);margin-top:2px">Ej: pronosticaste 2-1 y fue 2-1</div>
+          </div>
+          <div style="background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.3);border-radius:8px;padding:10px 14px;text-align:center;flex:1;min-width:100px">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:2rem;font-weight:800;color:#3b82f6">+1</div>
+            <div style="font-size:.78rem;color:var(--muted)">Resultado correcto</div>
+            <div style="font-size:.72rem;color:var(--muted);margin-top:2px">Ej: pronosticaste victoria y ganaron</div>
+          </div>
+          <div style="background:rgba(255,255,255,.05);border:1px solid var(--border);border-radius:8px;padding:10px 14px;text-align:center;flex:1;min-width:100px">
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:2rem;font-weight:800;color:var(--muted)">0</div>
+            <div style="font-size:.78rem;color:var(--muted)">Resultado incorrecto</div>
+            <div style="font-size:.72rem;color:var(--muted);margin-top:2px">No se restan puntos</div>
+          </div>
+        </div>
+      </div>
+
+      <div style="border-left:3px solid var(--accent);padding-left:12px;margin-bottom:1.2rem">
+        <p style="font-size:.95rem;font-weight:600;margin-bottom:4px">5. Resultados y tabla</p>
+        <p style="font-size:.85rem;color:var(--muted)">En <strong style="color:var(--text)">🏆 Resultados</strong> puedes ver la tabla de posiciones en tiempo real, los pronósticos de todos una vez bloqueado el partido, y comentar o reaccionar a cada partido con emojis.</p>
+      </div>
+
+      <div style="border-left:3px solid var(--accent);padding-left:12px;margin-bottom:1.2rem">
+        <p style="font-size:.95rem;font-weight:600;margin-bottom:4px">6. Tu PIN es personal</p>
+        <p style="font-size:.85rem;color:var(--muted)">No compartas tu PIN con nadie. Es la única forma de modificar tus pronósticos. Si lo olvidas, contacta al administrador.</p>
+      </div>
+
+      <div style="background:rgba(232,200,74,.08);border:1px solid rgba(232,200,74,.2);border-radius:8px;padding:10px 14px;font-size:.83rem;color:var(--accent)">
+        ⚽ ¡Buena suerte a todos! El que más puntos acumule al final de la fase de grupos gana.
+      </div>
+    </div>
+  </div>
+
+</div>
+
 <div class="toast" id="toast"></div>
 
 <script>
@@ -283,8 +351,8 @@ function f(t){
 // Fuente: Calendario oficial FIFA Mundial 2026
 const MATCHES = [
   // --- Jornada 1 ---
-  {id:1,  group:'A', home:'México',         away:'Sudáfrica',          kickoff:'2026-06-09T14:45:00-04:00'},
-  {id:2,  group:'A', home:'Corea del Sur',  away:'República Checa',    kickoff:'2026-06-09T14:48:00-04:00'},
+  {id:1,  group:'A', home:'México',         away:'Sudáfrica',          kickoff:'2026-06-09T14:46:00-04:00'},
+  {id:2,  group:'A', home:'Corea del Sur',  away:'República Checa',    kickoff:'2026-06-09T14:50:00-04:00'},
   {id:3,  group:'B', home:'Canadá',         away:'Bosnia y Herzegovina',kickoff:'2026-06-12T15:00:00-04:00'},
   {id:4,  group:'D', home:'USA',            away:'Paraguay',           kickoff:'2026-06-12T21:00:00-04:00'},
   {id:5,  group:'B', home:'Qatar',          away:'Suiza',              kickoff:'2026-06-13T15:00:00-04:00'},
