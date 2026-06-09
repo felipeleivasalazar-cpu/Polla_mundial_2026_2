@@ -495,7 +495,7 @@ async function apiPost(body){
 }
 
 // ── STATE ──────────────────────────────────────────────────
-let state = {participants:[],pronosticos:{},results:{},comments:[],pending:[],cuota:20000,totalPozo:0};
+let state = {participants:[],pronosticos:{},results:{},comments:[],pending:[],cuota:15000,totalPozo:0};
 
 async function loadAll(){
   const data = await apiGet();
@@ -598,7 +598,7 @@ async function validateAndLoadForm(){
   const r = await apiPost({action:'validatePin',name:user,pin:pin});
   if(!r) return;
   if(r.error || !r.ok){
-    errEl.textContent='PIN incorrecto. Intenta de nuevo.';
+    errEl.textContent = (r && r.error) ? r.error : 'PIN incorrecto. Intenta de nuevo.';
     errEl.style.display='block';
     return;
   }
@@ -854,7 +854,7 @@ function renderAdminCuota(){
   const btn = document.getElementById('admin-cuota-btn');
   const info = document.getElementById('admin-cuota-info');
   if(!input) return;
-  input.value = state.cuota || 20000;
+  input.value = state.cuota || 15000;
   const started = MATCHES.some(m => isLocked(m));
   if(started){
     input.disabled = true;
@@ -911,7 +911,7 @@ async function approveUser(name){
   if(r.error){toast(r.error);return;}
   state.pending = (state.pending||[]).filter(p=>p!==name);
   if(!state.participants.includes(name)) state.participants.push(name);
-  state.totalPozo = (state.cuota||20000) * state.participants.length;
+  state.totalPozo = (state.cuota||15000) * state.participants.length;
   updatePozoBanner();
   renderAdminCuota();
   renderApprovals();
