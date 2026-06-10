@@ -230,6 +230,17 @@ input:focus,select:focus{border-color:var(--accent)}
       <div id="pin-error" style="display:none;color:#ef4444;font-size:.82rem;margin-top:8px;text-align:center"></div>
       <p style="text-align:center;margin-top:14px;font-size:.83rem;color:var(--muted)">¿No tienes cuenta? <a href="#" onclick="switchTabByName('registro')" style="color:var(--accent);text-decoration:none;font-weight:600">Regístrate aquí</a></p>
     </div>
+    <div id="prono-progress" style="display:none;margin-bottom:12px">
+      <div class="card" style="background:rgba(34,197,94,.07);border-color:rgba(34,197,94,.25);padding:.75rem 1rem">
+        <div style="display:flex;align-items:center;justify-content:space-between">
+          <span style="font-size:.85rem;color:var(--muted)">Partidos pronosticados</span>
+          <span id="prono-progress-text" style="font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:700;color:#22c55e">0 / 72</span>
+        </div>
+        <div style="margin-top:6px;background:rgba(255,255,255,.08);border-radius:999px;height:6px;overflow:hidden">
+          <div id="prono-progress-bar" style="height:100%;background:#22c55e;border-radius:999px;transition:width .4s;width:0%"></div>
+        </div>
+      </div>
+    </div>
     <div id="matches-form"></div>
     <div id="save-prono-btn" style="display:none">
       <button class="btn primary full" onclick="savePronosticos()">Guardar pronósticos →</button>
@@ -262,7 +273,7 @@ input:focus,select:focus{border-color:var(--accent)}
         <div style="display:flex;gap:10px;align-items:flex-end">
           <div style="flex:1">
             <label>Monto por jugador (CLP)</label>
-            <input type="number" id="admin-cuota-input" placeholder="20000" min="0">
+            <input type="number" id="admin-cuota-input" placeholder="15000" min="0">
           </div>
           <button class="btn primary" onclick="saveCuota()" id="admin-cuota-btn" style="margin-bottom:1px">Guardar</button>
         </div>
@@ -327,6 +338,27 @@ input:focus,select:focus{border-color:var(--accent)}
         <p style="font-size:.85rem;color:var(--muted)">No compartas tu PIN con nadie. Es la única forma de modificar tus pronósticos. Si lo olvidas, contacta al administrador.</p>
       </div>
 
+      <div style="border-left:3px solid var(--accent);padding-left:12px;margin-bottom:1.2rem">
+        <p style="font-size:.95rem;font-weight:600;margin-bottom:6px">7. Cuota y premios</p>
+        <p style="font-size:.85rem;color:var(--muted);margin-bottom:8px">La cuota de participación es de <strong id="howto-cuota" style="color:var(--accent);font-size:1rem">$ 15.000</strong> por jugador.</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <div style="background:rgba(232,200,74,.1);border:1px solid rgba(232,200,74,.25);border-radius:8px;padding:8px 12px;flex:1;min-width:80px;text-align:center">
+            <div style="font-size:1.3rem">🥇</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:700;color:var(--accent)">60%</div>
+            <div style="font-size:.72rem;color:var(--muted)" id="howto-prize-1-amt"></div>
+          </div>
+          <div style="background:rgba(148,163,184,.08);border:1px solid rgba(148,163,184,.2);border-radius:8px;padding:8px 12px;flex:1;min-width:80px;text-align:center">
+            <div style="font-size:1.3rem">🥈</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:700;color:#94a3b8">30%</div>
+            <div style="font-size:.72rem;color:var(--muted)" id="howto-prize-2-amt"></div>
+          </div>
+          <div style="background:rgba(205,124,61,.08);border:1px solid rgba(205,124,61,.2);border-radius:8px;padding:8px 12px;flex:1;min-width:80px;text-align:center">
+            <div style="font-size:1.3rem">🥉</div>
+            <div style="font-family:'Barlow Condensed',sans-serif;font-size:1.1rem;font-weight:700;color:#cd7c3d">10%</div>
+            <div style="font-size:.72rem;color:var(--muted)" id="howto-prize-3-amt"></div>
+          </div>
+        </div>
+      </div>
       <div style="background:rgba(232,200,74,.08);border:1px solid rgba(232,200,74,.2);border-radius:8px;padding:10px 14px;font-size:.83rem;color:var(--accent)">
         ⚽ ¡Buena suerte a todos! El que más puntos acumule al final de la fase de grupos gana.
       </div>
@@ -417,43 +449,43 @@ const MATCHES = [
   {id:34, group:'E', home:'Alemania',       away:'Costa de Marfil',    kickoff:'2026-06-20T16:00:00-04:00'},
   {id:35, group:'E', home:'Ecuador',        away:'Curazao',            kickoff:'2026-06-20T22:00:00-04:00'},
   {id:36, group:'F', home:'Túnez',          away:'Japón',              kickoff:'2026-06-21T00:00:00-04:00'},
-  {id:37, group:'G', home:'Bélgica',        away:'Irán',               kickoff:'2026-06-21T12:00:00-04:00'},
-  {id:38, group:'H', home:'España',         away:'Arabia Saudita',     kickoff:'2026-06-21T15:00:00-04:00'},
-  {id:39, group:'G', home:'Egipto',         away:'Nueva Zelanda',      kickoff:'2026-06-21T18:00:00-04:00'},
-  {id:40, group:'H', home:'Uruguay',        away:'Cabo Verde',         kickoff:'2026-06-21T21:00:00-04:00'},
-  {id:41, group:'I', home:'Francia',        away:'Irak',               kickoff:'2026-06-22T12:00:00-04:00'},
-  {id:42, group:'J', home:'Argentina',      away:'Austria',            kickoff:'2026-06-22T15:00:00-04:00'},
-  {id:43, group:'I', home:'Noruega',        away:'Senegal',            kickoff:'2026-06-22T18:00:00-04:00'},
-  {id:44, group:'J', home:'Argelia',        away:'Jordania',           kickoff:'2026-06-22T21:00:00-04:00'},
-  {id:45, group:'K', home:'Portugal',       away:'Uzbekistán',         kickoff:'2026-06-23T12:00:00-04:00'},
-  {id:46, group:'L', home:'Inglaterra',     away:'Ghana',              kickoff:'2026-06-23T15:00:00-04:00'},
-  {id:47, group:'L', home:'Croacia',        away:'Panamá',             kickoff:'2026-06-23T18:00:00-04:00'},
-  {id:48, group:'K', home:'Colombia',       away:'RD Congo',           kickoff:'2026-06-23T21:00:00-04:00'},
+  {id:37, group:'H', home:'España',         away:'Arabia Saudita',     kickoff:'2026-06-21T12:00:00-04:00'},
+  {id:38, group:'G', home:'Bélgica',        away:'Irán',               kickoff:'2026-06-21T15:00:00-04:00'},
+  {id:39, group:'H', home:'Uruguay',        away:'Cabo Verde',         kickoff:'2026-06-21T18:00:00-04:00'},
+  {id:40, group:'G', home:'Nueva Zelanda',  away:'Egipto',             kickoff:'2026-06-21T21:00:00-04:00'},
+  {id:41, group:'J', home:'Argentina',      away:'Austria',            kickoff:'2026-06-22T13:00:00-04:00'},
+  {id:42, group:'I', home:'Francia',        away:'Irak',               kickoff:'2026-06-22T17:00:00-04:00'},
+  {id:43, group:'I', home:'Noruega',        away:'Senegal',            kickoff:'2026-06-22T20:00:00-04:00'},
+  {id:44, group:'J', home:'Jordania',       away:'Argelia',            kickoff:'2026-06-22T23:00:00-04:00'},
+  {id:45, group:'K', home:'Portugal',       away:'Uzbekistán',         kickoff:'2026-06-23T13:00:00-04:00'},
+  {id:46, group:'L', home:'Inglaterra',     away:'Ghana',              kickoff:'2026-06-23T16:00:00-04:00'},
+  {id:47, group:'L', home:'Croacia',        away:'Panamá',             kickoff:'2026-06-23T19:00:00-04:00'},
+  {id:48, group:'K', home:'Colombia',       away:'RD Congo',           kickoff:'2026-06-23T22:00:00-04:00'},
   // --- Jornada 3 (simultáneos) ---
-  {id:49, group:'A', home:'México',         away:'República Checa',    kickoff:'2026-06-24T21:00:00-04:00'},
-  {id:50, group:'A', home:'Sudáfrica',      away:'Corea del Sur',      kickoff:'2026-06-24T21:00:00-04:00'},
-  {id:51, group:'B', home:'Bosnia y Herzegovina',away:'Qatar',         kickoff:'2026-06-25T17:00:00-04:00'},
-  {id:52, group:'B', home:'Suiza',          away:'Canadá',             kickoff:'2026-06-25T17:00:00-04:00'},
-  {id:53, group:'C', home:'Brasil',         away:'Escocia',            kickoff:'2026-06-25T21:00:00-04:00'},
-  {id:54, group:'C', home:'Marruecos',      away:'Haití',              kickoff:'2026-06-25T21:00:00-04:00'},
-  {id:55, group:'D', home:'USA',            away:'Turquía',            kickoff:'2026-06-26T17:00:00-04:00'},
-  {id:56, group:'D', home:'Paraguay',       away:'Australia',          kickoff:'2026-06-26T17:00:00-04:00'},
-  {id:57, group:'E', home:'Alemania',       away:'Ecuador',            kickoff:'2026-06-26T21:00:00-04:00'},
-  {id:58, group:'E', home:'Costa de Marfil',away:'Curazao',            kickoff:'2026-06-26T21:00:00-04:00'},
-  {id:59, group:'F', home:'Países Bajos',   away:'Túnez',              kickoff:'2026-06-27T17:00:00-04:00'},
-  {id:60, group:'F', home:'Japón',          away:'Suecia',             kickoff:'2026-06-27T17:00:00-04:00'},
-  {id:61, group:'G', home:'Bélgica',        away:'Nueva Zelanda',      kickoff:'2026-06-27T21:00:00-04:00'},
-  {id:62, group:'G', home:'Egipto',         away:'Irán',               kickoff:'2026-06-27T21:00:00-04:00'},
-  {id:63, group:'H', home:'España',         away:'Uruguay',            kickoff:'2026-06-24T17:00:00-04:00'},
-  {id:64, group:'H', home:'Cabo Verde',     away:'Arabia Saudita',     kickoff:'2026-06-24T17:00:00-04:00'},
-  {id:65, group:'I', home:'Francia',        away:'Noruega',            kickoff:'2026-06-24T13:00:00-04:00'},
-  {id:66, group:'I', home:'Senegal',        away:'Irak',               kickoff:'2026-06-24T13:00:00-04:00'},
-  {id:67, group:'J', home:'Argentina',      away:'Jordania',           kickoff:'2026-06-25T13:00:00-04:00'},
-  {id:68, group:'J', home:'Argelia',        away:'Austria',            kickoff:'2026-06-25T13:00:00-04:00'},
-  {id:69, group:'K', home:'Portugal',       away:'Colombia',           kickoff:'2026-06-26T13:00:00-04:00'},
-  {id:70, group:'K', home:'RD Congo',       away:'Uzbekistán',         kickoff:'2026-06-26T13:00:00-04:00'},
-  {id:71, group:'L', home:'Inglaterra',     away:'Panamá',             kickoff:'2026-06-27T13:00:00-04:00'},
-  {id:72, group:'L', home:'Ghana',          away:'Croacia',            kickoff:'2026-06-27T13:00:00-04:00'},
+  {id:49, group:'B', home:'Suiza',          away:'Canadá',             kickoff:'2026-06-24T15:00:00-04:00'},
+  {id:50, group:'B', home:'Bosnia y Herzegovina',away:'Qatar',         kickoff:'2026-06-24T15:00:00-04:00'},
+  {id:51, group:'C', home:'Escocia',        away:'Brasil',             kickoff:'2026-06-24T18:00:00-04:00'},
+  {id:52, group:'C', home:'Marruecos',      away:'Haití',              kickoff:'2026-06-24T18:00:00-04:00'},
+  {id:53, group:'A', home:'República Checa',away:'México',             kickoff:'2026-06-24T21:00:00-04:00'},
+  {id:54, group:'A', home:'Sudáfrica',      away:'Corea del Sur',      kickoff:'2026-06-24T21:00:00-04:00'},
+  {id:55, group:'E', home:'Curazao',        away:'Costa de Marfil',    kickoff:'2026-06-25T16:00:00-04:00'},
+  {id:56, group:'E', home:'Ecuador',        away:'Alemania',           kickoff:'2026-06-25T16:00:00-04:00'},
+  {id:57, group:'F', home:'Japón',          away:'Suecia',             kickoff:'2026-06-25T19:00:00-04:00'},
+  {id:58, group:'F', home:'Túnez',          away:'Países Bajos',       kickoff:'2026-06-25T19:00:00-04:00'},
+  {id:59, group:'D', home:'Turquía',        away:'USA',                kickoff:'2026-06-25T22:00:00-04:00'},
+  {id:60, group:'D', home:'Paraguay',       away:'Australia',          kickoff:'2026-06-25T22:00:00-04:00'},
+  {id:61, group:'I', home:'Noruega',        away:'Francia',            kickoff:'2026-06-26T15:00:00-04:00'},
+  {id:62, group:'I', home:'Senegal',        away:'Irak',               kickoff:'2026-06-26T15:00:00-04:00'},
+  {id:63, group:'H', home:'Cabo Verde',     away:'Arabia Saudita',     kickoff:'2026-06-26T20:00:00-04:00'},
+  {id:64, group:'H', home:'Uruguay',        away:'España',             kickoff:'2026-06-26T20:00:00-04:00'},
+  {id:65, group:'G', home:'Egipto',         away:'Irán',               kickoff:'2026-06-26T23:00:00-04:00'},
+  {id:66, group:'G', home:'Nueva Zelanda',  away:'Bélgica',            kickoff:'2026-06-26T23:00:00-04:00'},
+  {id:67, group:'L', home:'Panamá',         away:'Inglaterra',         kickoff:'2026-06-27T17:00:00-04:00'},
+  {id:68, group:'L', home:'Croacia',        away:'Ghana',              kickoff:'2026-06-27T17:00:00-04:00'},
+  {id:69, group:'K', home:'Colombia',       away:'Portugal',           kickoff:'2026-06-27T19:30:00-04:00'},
+  {id:70, group:'K', home:'RD Congo',       away:'Uzbekistán',         kickoff:'2026-06-27T19:30:00-04:00'},
+  {id:71, group:'J', home:'Argelia',        away:'Austria',            kickoff:'2026-06-27T22:00:00-04:00'},
+  {id:72, group:'J', home:'Jordania',       away:'Argentina',          kickoff:'2026-06-27T22:00:00-04:00'},
 ];
 
 // ── API ────────────────────────────────────────────────────
@@ -491,7 +523,7 @@ async function apiPost(body){
 }
 
 // ── STATE ──────────────────────────────────────────────────
-let state = {participants:[],pronosticos:{},results:{},comments:[],pending:[],cuota:20000,totalPozo:0};
+let state = {participants:[],pronosticos:{},results:{},comments:[],pending:[],cuota:15000,totalPozo:0};
 
 async function loadAll(){
   const data = await apiGet();
@@ -594,7 +626,7 @@ async function validateAndLoadForm(){
   const r = await apiPost({action:'validatePin',name:user,pin:pin});
   if(!r) return;
   if(r.error || !r.ok){
-    errEl.textContent='PIN incorrecto. Intenta de nuevo.';
+    errEl.textContent = (r && r.error) ? r.error : 'PIN incorrecto. Intenta de nuevo.';
     errEl.style.display='block';
     return;
   }
@@ -602,6 +634,32 @@ async function validateAndLoadForm(){
   sessionStorage.setItem('pronoUser', user);
   sessionStorage.setItem('pronoPin', pinVal);
   loadUserForm(user);
+  setTimeout(()=>updateProgressBar(user), 100);
+}
+
+function updateProgressBar(user){
+  const existing = state.pronosticos[user]||{};
+  const savedCount = Object.keys(existing).length;
+  const progressEl = document.getElementById('prono-progress');
+  const textEl = document.getElementById('prono-progress-text');
+  const barEl = document.getElementById('prono-progress-bar');
+  if(progressEl) progressEl.style.display='block';
+  if(textEl) textEl.textContent = savedCount + ' / 72';
+  if(barEl) barEl.style.width = Math.round((savedCount/72)*100)+'%';
+}
+
+function updateCheck(matchId){
+  const h=document.getElementById('h'+matchId);
+  const a=document.getElementById('a'+matchId);
+  const check=document.getElementById('check'+matchId);
+  if(!check) return;
+  if(h&&a&&h.value!==''&&a.value!==''){
+    check.textContent='✏️';
+    check.style.fontSize='1rem';
+  } else {
+    check.textContent='—';
+    check.style.fontSize='.8rem';
+  }
 }
 
 function isLocked(m){
@@ -667,7 +725,12 @@ async function savePronosticos(){
   if(r.error){toast(r.error);return;}
   state.pronosticos[user]=data;
   renderParticipants();
-  toast('Pronósticos de '+user+' guardados ✓');
+  Object.keys(data).forEach(id=>{
+    const check=document.getElementById('check'+id);
+    if(check){check.textContent='✅';check.style.fontSize='1rem';}
+  });
+  updateProgressBar(user);
+  toast('Pronósticos guardados ✓ ('+Object.keys(data).length+' partidos)');
 }
 
 // ── PUNTAJE ────────────────────────────────────────────────
@@ -812,7 +875,7 @@ function renderAdminCuota(){
   const btn = document.getElementById('admin-cuota-btn');
   const info = document.getElementById('admin-cuota-info');
   if(!input) return;
-  input.value = state.cuota || 20000;
+  input.value = state.cuota || 15000;
   const started = MATCHES.some(m => isLocked(m));
   if(started){
     input.disabled = true;
@@ -824,7 +887,7 @@ function renderAdminCuota(){
     input.disabled = false;
     btn.disabled = false;
     btn.style.opacity = '1';
-    const total = (state.cuota||20000) * state.participants.length;
+    const total = (state.cuota||15000) * state.participants.length;
     info.textContent = state.participants.length + ' jugadores aprobados · Pozo actual: ' + formatPesos(total);
     info.style.color = 'var(--muted)';
   }
@@ -869,7 +932,7 @@ async function approveUser(name){
   if(r.error){toast(r.error);return;}
   state.pending = (state.pending||[]).filter(p=>p!==name);
   if(!state.participants.includes(name)) state.participants.push(name);
-  state.totalPozo = (state.cuota||20000) * state.participants.length;
+  state.totalPozo = (state.cuota||15000) * state.participants.length;
   updatePozoBanner();
   renderAdminCuota();
   renderApprovals();
@@ -975,10 +1038,19 @@ function formatPesos(n){
 }
 function updatePozoBanner(){
   const total = state.totalPozo || 0;
+  const cuota = state.cuota || 15000;
   document.getElementById('pozo-amount').textContent = formatPesos(total);
   document.getElementById('pozo-1').textContent = formatPesos(total * 0.6);
   document.getElementById('pozo-2').textContent = formatPesos(total * 0.3);
   document.getElementById('pozo-3').textContent = formatPesos(total * 0.1);
+  const howCuota = document.getElementById('howto-cuota');
+  if(howCuota) howCuota.textContent = formatPesos(cuota);
+  const p1 = document.getElementById('howto-prize-1-amt');
+  const p2 = document.getElementById('howto-prize-2-amt');
+  const p3 = document.getElementById('howto-prize-3-amt');
+  if(p1) p1.textContent = total > 0 ? formatPesos(total*0.6) : '';
+  if(p2) p2.textContent = total > 0 ? formatPesos(total*0.3) : '';
+  if(p3) p3.textContent = total > 0 ? formatPesos(total*0.1) : '';
 }
 
 // ── COUNTDOWN ─────────────────────────────────────────────────
