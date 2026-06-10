@@ -299,7 +299,21 @@ input:focus,select:focus{border-color:var(--accent)}
 
       <div style="border-left:3px solid var(--accent);padding-left:12px;margin-bottom:1.2rem">
         <p style="font-size:.95rem;font-weight:600;margin-bottom:4px">2. Ingresa tus pronósticos</p>
-        <p style="font-size:.85rem;color:var(--muted)">Ve a <strong style="color:var(--text)">📋 Pronósticos</strong>, selecciona tu nombre e ingresa tu PIN. Completa el marcador que predices para cada partido y presiona <strong style="color:var(--text)">Guardar pronósticos</strong>. Puedes modificarlos cuantas veces quieras antes de que comience cada partido.</p>
+        <p style="font-size:.85rem;color:var(--muted);margin-bottom:8px">Ve a <strong style="color:var(--text)">📋 Pronósticos</strong>, selecciona tu nombre e ingresa tu PIN. Completa el marcador que predices para cada partido y presiona <strong style="color:var(--text)">Guardar pronósticos</strong>. Puedes modificarlos cuantas veces quieras antes de que comience cada partido.</p>
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <div style="display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--muted)">
+            <span style="font-size:.8rem;min-width:20px;text-align:center">—</span>
+            <span>Partido sin pronosticar</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--muted)">
+            <span style="font-size:1rem;min-width:20px;text-align:center">✏️</span>
+            <span>Marcador ingresado pero aún no guardado</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--muted)">
+            <span style="font-size:1rem;min-width:20px;text-align:center">✅</span>
+            <span>Pronóstico guardado correctamente</span>
+          </div>
+        </div>
       </div>
 
       <div style="border-left:3px solid var(--accent);padding-left:12px;margin-bottom:1.2rem">
@@ -683,25 +697,35 @@ function loadUserForm(user){
   btn.style.display='block';
   const existing = state.pronosticos[user]||{};
   let html='';
-  const groups = [...new Set(MATCHES.map(m=>m.group))];
-  for(const g of groups){
-    const gMatches = MATCHES.filter(m=>m.group===g);
-    html+='<div class="group-label">Grupo '+g+'</div><div class="card">';
-    gMatches.forEach(m=>{
+  // Ordenar partidos cronológicamente
+  const sortedMatches = [...MATCHES].sort((a,b)=>new Date(a.kickoff)-new Date(b.kickoff));
+  // Agrupar por fecha
+  const byDate={};
+  sortedMatches.forEach(m=>{
+    const d=new Date(m.kickoff);
+    const key=d.toLocaleDateString('es-CL',{weekday:'long',day:'numeric',month:'long'});
+    if(!byDate[key]) byDate[key]=[];
+    byDate[key].push(m);
+  });
+  for(const [fecha, dateMatches] of Object.entries(byDate)){
+    html+='<div class="group-label">'+fecha.charAt(0).toUpperCase()+fecha.slice(1)+'</div><div class="card">';
+    dateMatches.forEach(m=>{
       const p=existing[m.id]||{h:'',a:''};
       const locked=isLocked(m);
+      const saved=!!(existing[m.id]&&existing[m.id].h!==''&&existing[m.id].a!=='');
       const rowStyle=locked?'opacity:.45;':'';
       const lockIcon=locked?'🔒 ':'🕐 ';
       const timeColor=locked?'#ef4444':'var(--muted)';
       const dis=locked?'disabled':'';
+      const checkHtml=locked?'':('<span id="check'+m.id+'" style="font-size:'+(saved?'1rem':'.8rem')+';margin-left:6px">'+(saved?'✅':'—')+'</span>');
       html+='<div class="match-row" style="'+rowStyle+'">';
       html+='<span class="team-name right">'+f(m.home)+' '+m.home+'</span>';
-      html+='<div class="score-box"><input type="number" min="0" max="20" id="h'+m.id+'" value="'+p.h+'" placeholder="0" '+dis+'></div>';
+      html+='<div class="score-box"><input type="number" min="0" max="20" id="h'+m.id+'" value="'+p.h+'" placeholder="0" '+dis+' oninput="updateCheck('+m.id+')"></div>';
       html+='<span class="vs">-</span>';
-      html+='<div class="score-box"><input type="number" min="0" max="20" id="a'+m.id+'" value="'+p.a+'" placeholder="0" '+dis+'></div>';
+      html+='<div class="score-box"><input type="number" min="0" max="20" id="a'+m.id+'" value="'+p.a+'" placeholder="0" '+dis+' oninput="updateCheck('+m.id+')"></div>';
       html+='<span class="team-name">'+f(m.away)+' '+m.away+'</span>';
       html+='</div>';
-      html+='<div style="font-size:.7rem;color:'+timeColor+';text-align:center;padding:2px 0 7px;border-bottom:1px solid var(--border)">'+lockIcon+fmtKickoff(m)+'</div>';
+      html+='<div style="display:flex;align-items:center;justify-content:space-between;font-size:.7rem;padding:2px 0 7px;border-bottom:1px solid var(--border)"><span style="color:'+timeColor+'">'+lockIcon+fmtKickoff(m)+' &nbsp;·&nbsp; <span style="color:var(--accent);font-weight:600">Grupo '+m.group+'</span></span>'+checkHtml+'</div>';
     });
     html+='</div>';
   }
