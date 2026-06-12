@@ -734,9 +734,10 @@ function loadUserForm(user){
 
 async function savePronosticos(){
   const btn = document.getElementById('save-prono-btn-inner');
+  const resetBtn = () => { if(btn){ btn.disabled=false; btn.textContent='Guardar pronósticos →'; } };
   if(btn){ btn.disabled=true; btn.textContent='Guardando...'; }
   const user = document.getElementById('pronostico-user').value;
-  if(!user) return;
+  if(!user){ resetBtn(); return; }
   const data={};
   MATCHES.forEach(m=>{
     const h=document.getElementById('h'+m.id);
@@ -745,11 +746,12 @@ async function savePronosticos(){
       data[m.id]={h:parseInt(h.value),a:parseInt(a.value)};
   });
   if(!Object.keys(data).length){
-    if(btn){ btn.disabled=false; btn.textContent='Guardar pronósticos →'; }
+    resetBtn();
     toast('Ingresa al menos un partido');return;
   }
   const pin = document.getElementById('prono-pin').value.trim();
   const r = await apiPost({action:'savePronosticos',user,pin,pronosticos:data});
+  resetBtn();
   if(!r) return;
   if(r.error){toast(r.error);return;}
   state.pronosticos[user]=data;
