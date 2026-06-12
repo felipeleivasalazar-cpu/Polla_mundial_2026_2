@@ -243,7 +243,7 @@ input:focus,select:focus{border-color:var(--accent)}
     </div>
     <div id="matches-form"></div>
     <div id="save-prono-btn" style="display:none">
-      <button class="btn primary full" onclick="savePronosticos()">Guardar pronósticos →</button>
+      <button id="save-prono-btn-inner" class="btn primary full" onclick="savePronosticos()">Guardar pronósticos →</button>
     </div>
   </div>
 
@@ -733,6 +733,8 @@ function loadUserForm(user){
 }
 
 async function savePronosticos(){
+  const btn = document.getElementById('save-prono-btn-inner');
+  if(btn){ btn.disabled=true; btn.textContent='Guardando...'; }
   const user = document.getElementById('pronostico-user').value;
   if(!user) return;
   const data={};
@@ -742,7 +744,10 @@ async function savePronosticos(){
     if(h&&a&&h.value!==''&&a.value!=='')
       data[m.id]={h:parseInt(h.value),a:parseInt(a.value)};
   });
-  if(!Object.keys(data).length){toast('Ingresa al menos un partido');return;}
+  if(!Object.keys(data).length){
+    if(btn){ btn.disabled=false; btn.textContent='Guardar pronósticos →'; }
+    toast('Ingresa al menos un partido');return;
+  }
   const pin = document.getElementById('prono-pin').value.trim();
   const r = await apiPost({action:'savePronosticos',user,pin,pronosticos:data});
   if(!r) return;
