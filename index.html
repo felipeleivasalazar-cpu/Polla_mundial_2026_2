@@ -632,7 +632,7 @@ function clearPinValidation(){
 
 async function validateAndLoadForm(){
   const user = document.getElementById('pronostico-user').value;
-  const pin = document.getElementById('prono-pin').value.trim();
+  const pin = sessionStorage.getItem('pronoPin') || document.getElementById('prono-pin').value.trim();
   const errEl = document.getElementById('pin-error');
   errEl.style.display='none';
   if(!user){toast('Selecciona tu nombre');return;}
@@ -749,7 +749,7 @@ async function savePronosticos(){
     resetBtn();
     toast('Ingresa al menos un partido');return;
   }
-  const pin = document.getElementById('prono-pin').value.trim();
+  const pin = sessionStorage.getItem('pronoPin') || document.getElementById('prono-pin').value.trim();
   const r = await apiPost({action:'savePronosticos',user,pin,pronosticos:data});
   resetBtn();
   if(!r) return;
