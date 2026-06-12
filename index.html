@@ -720,9 +720,9 @@ function loadUserForm(user){
       const checkHtml=locked?'':('<span id="check'+m.id+'" style="font-size:'+(saved?'1rem':'.8rem')+';margin-left:6px">'+(saved?'✅':'—')+'</span>');
       html+='<div class="match-row" style="'+rowStyle+'">';
       html+='<span class="team-name right">'+f(m.home)+' '+m.home+'</span>';
-      html+='<div class="score-box"><input type="number" min="0" max="20" id="h'+m.id+'" value="'+p.h+'" placeholder="0" '+dis+' oninput="updateCheck('+m.id+')"></div>';
+      html+='<div class="score-box"><input type="number" min="0" max="20" id="h'+m.id+'" value="'+p.h+'" placeholder="?" '+dis+' oninput="updateCheck('+m.id+')"></div>';
       html+='<span class="vs">-</span>';
-      html+='<div class="score-box"><input type="number" min="0" max="20" id="a'+m.id+'" value="'+p.a+'" placeholder="0" '+dis+' oninput="updateCheck('+m.id+')"></div>';
+      html+='<div class="score-box"><input type="number" min="0" max="20" id="a'+m.id+'" value="'+p.a+'" placeholder="?" '+dis+' oninput="updateCheck('+m.id+')"></div>';
       html+='<span class="team-name">'+f(m.away)+' '+m.away+'</span>';
       html+='</div>';
       html+='<div style="display:flex;align-items:center;justify-content:space-between;font-size:.7rem;padding:2px 0 7px;border-bottom:1px solid var(--border)"><span style="color:'+timeColor+'">'+lockIcon+fmtKickoff(m)+' &nbsp;·&nbsp; <span style="color:var(--accent);font-weight:600">Grupo '+m.group+'</span></span>'+checkHtml+'</div>';
